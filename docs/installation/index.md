@@ -1,207 +1,132 @@
-# Installation Guide
+# Installation & Updates
 
-Welcome to the Lyra Platform installation guide. This comprehensive guide will walk you through deploying Lyra on your Kubernetes cluster.
+This section covers everything you need to deploy, configure, and maintain Lyra Platform.
 
-## Overview
+## Installation Overview
 
-The Lyra installation process consists of several major steps:
+Lyra Platform is deployed as a Helm chart to Kubernetes clusters. The deployment process includes:
 
-1. **Prerequisites** - Prepare your environment and gather requirements
-2. **Kubernetes Setup** - Configure your Kubernetes cluster
-3. **Storage Setup** - Deploy Ceph storage with Rook
-4. **Networking** - Configure MetalLB for load balancing
-5. **Ingress Controller** - Set up NGINX Ingress Controller
-6. **Harbor Registry** - Deploy container registry
-7. **Rancher** - Install Kubernetes management platform
-8. **PostgreSQL** - Deploy database server
-9. **Redis** - Set up caching layer
-10. **Lyra Application** - Deploy the main application
-11. **Post-Installation** - Verify and configure your installation
+1. **Prerequisites** - Preparing your environment and infrastructure
+2. **Initial Deployment** - Installing Lyra for the first time
+3. **Configuration** - Post-installation configuration and setup
+4. **Updates** - Keeping your Lyra installation up-to-date
 
-## Installation Paths
+## Installation Guides
 
-Choose the installation path that best fits your needs:
+### [Prerequisites](prerequisites.md)
+System requirements, dependencies, and infrastructure preparation.
 
-=== "Quick Start"
+**Topics covered:**
+- Kubernetes cluster requirements
+- Storage requirements (Ceph/Rook)
+- Container registry setup (Harbor)
+- Network and ingress configuration
+- SSL/TLS certificates
 
-    **Best for**: Testing and evaluation
+### [Initial Deployment](initial-deployment.md)
+Step-by-step guide for deploying Lyra Platform for the first time.
 
-    **Time**: ~2 hours
+**Topics covered:**
+- Building and pushing container images
+- Helm chart configuration
+- Deploying via Rancher UI
+- Initial superuser setup
+- Verification and testing
 
-    **Components**:
+### [Updates & Maintenance](updates.md)
+Managing updates, upgrades, and ongoing maintenance.
 
-    - Minimal Kubernetes cluster (3 nodes)
-    - Basic storage configuration
-    - Lyra application with default settings
+**Topics covered:**
+- Update strategies and best practices
+- Rolling vs. blue-green deployments
+- Backup and restore procedures
+- Rollback procedures
+- Health monitoring
 
-    [:octicons-arrow-right-24: Quick start guide](quick-start.md)
+## Quick Start
 
-=== "Production"
+For experienced users, here's the quick installation workflow:
 
-    **Best for**: Production deployments
+```bash
+# 1. Build and push images to Harbor
+cd infrastructure/lyra
+./build-and-push-frontend.sh
+./build-and-push-backend.sh
+./build-and-push-scheduler.sh
 
-    **Time**: 1-2 days
+# 2. Deploy via Rancher
+# - Navigate to Apps & Marketplace
+# - Install lyra-app Helm chart from Harbor
+# - Configure values through Rancher UI
+# - Click Install
 
-    **Components**:
-
-    - High-availability Kubernetes cluster (5+ nodes)
-    - Ceph storage cluster with redundancy
-    - SSL certificates and security hardening
-    - Monitoring and backup configuration
-    - Full LDAP integration
-
-    [:octicons-arrow-right-24: Production guide](prerequisites.md)
-
-=== "Development"
-
-    **Best for**: Development and testing
-
-    **Time**: ~1 hour
-
-    **Components**:
-
-    - Local Kubernetes (k3s/minikube)
-    - Single-node setup
-    - Development tools and utilities
-
-    [:octicons-arrow-right-24: Development guide](development.md)
-
-## Architecture Diagram
-
-```mermaid
-graph TB
-    subgraph "External Access"
-        A[Users]
-        B[HTTPS/443]
-    end
-
-    subgraph "Kubernetes Cluster"
-        C[MetalLB Load Balancer]
-        D[NGINX Ingress Controller]
-
-        subgraph "Lyra Application"
-            E[Frontend Pods]
-            F[Backend Pods]
-            G[Scheduler Pods]
-        end
-
-        subgraph "Data Layer"
-            H[PostgreSQL]
-            I[Redis]
-        end
-
-        subgraph "Tenant Namespaces"
-            J[Tenant 1 Resources]
-            K[Tenant 2 Resources]
-        end
-
-        subgraph "Storage"
-            L[Ceph/Rook Storage]
-        end
-    end
-
-    subgraph "External Services"
-        M[LDAP Server]
-        N[Harbor Registry]
-    end
-
-    A -->|HTTPS| B
-    B --> C
-    C --> D
-    D --> E
-    D --> F
-    E --> F
-    F --> H
-    F --> I
-    F --> M
-    F --> J
-    F --> K
-    J --> L
-    K --> L
-    N -.->|Pull Images| E
-    N -.->|Pull Images| F
-    N -.->|Pull Images| G
+# 3. Verify deployment
+kubectl get pods -n lyra
+kubectl get svc -n lyra
 ```
 
-## System Requirements
+## Deployment Architecture
 
-### Minimum Requirements
+Lyra uses a modern Kubernetes-native deployment architecture:
 
-| Component | Requirement |
-|-----------|-------------|
-| **Kubernetes Version** | 1.24 or higher |
-| **Worker Nodes** | 3 nodes minimum |
-| **CPU per Node** | 8 cores |
-| **Memory per Node** | 16 GB RAM |
-| **Storage** | 100 GB available |
-| **Network** | 1 Gbps |
+```
+┌─────────────────────────────────────────────────────────────┐
+│                      Ingress / Load Balancer                │
+│                    (MetalLB + Nginx Ingress)                │
+└────────────────────┬────────────────────────────────────────┘
+                     │
+     ┌───────────────┴───────────────┐
+     │                               │
+┌────▼─────┐                   ┌────▼──────┐
+│ Frontend │                   │  Backend  │
+│  (React) │◄─────────────────►│ (FastAPI) │
+└──────────┘                   └─────┬─────┘
+                                     │
+                    ┌────────────────┼────────────────┐
+                    │                │                │
+               ┌────▼─────┐    ┌────▼─────┐    ┌────▼────┐
+               │PostgreSQL│    │  Redis   │    │Scheduler│
+               └──────────┘    └──────────┘    └─────────┘
+                                     │
+                              ┌──────▼──────┐
+                              │  Kubernetes │
+                              │   (Tenant   │
+                              │  Namespaces)│
+                              └─────────────┘
+```
 
-### Recommended Requirements
+## Container Images
 
-| Component | Requirement |
-|-----------|-------------|
-| **Kubernetes Version** | 1.27 or higher |
-| **Worker Nodes** | 5+ nodes |
-| **CPU per Node** | 16 cores |
-| **Memory per Node** | 32 GB RAM |
-| **Storage** | 500 GB+ (Ceph cluster) |
-| **Network** | 10 Gbps |
+Lyra consists of three main container images stored in Harbor:
 
-!!! warning "Production Deployments"
-    For production deployments, we strongly recommend following the recommended requirements to ensure optimal performance and reliability.
+| Image | Purpose | Build Script |
+|-------|---------|--------------|
+| `lyra-frontend` | React web interface | `build-and-push-frontend.sh` |
+| `lyra-backend` | FastAPI REST API | `build-and-push-backend.sh` |
+| `lyra-scheduler` | Background job processor | `build-and-push-scheduler.sh` |
 
-## Pre-Installation Checklist
+All images are versioned and stored in your Harbor registry at `registry.lyra.ovh/lyra/`.
 
-Before starting the installation, ensure you have:
+## Helm Chart
 
-- [ ] Kubernetes cluster access with cluster-admin privileges
-- [ ] `kubectl` configured and working
-- [ ] Helm 3.x installed
-- [ ] Sufficient hardware resources
-- [ ] Network access to download container images
-- [ ] SSL certificates (for production)
-- [ ] LDAP server details (if using LDAP integration)
-- [ ] PostgreSQL database (or plan to deploy one)
-- [ ] Redis instance (or plan to deploy one)
+The Lyra Helm chart (`lyra-app`) is stored in Harbor's Helm repository and includes:
 
-## Next Steps
+- Kubernetes deployments for all components
+- Services and ingress configuration
+- ConfigMaps and Secrets management
+- Resource quotas and limits
+- Health checks and probes
+- HPA (Horizontal Pod Autoscaler) configurations
 
-1. **Review Prerequisites**: Start with the [prerequisites page](prerequisites.md) to ensure your environment is ready
-2. **Choose Installation Method**: Decide between quick start, production, or development installation
-3. **Follow the Guide**: Work through each section in order
-4. **Verify Installation**: Complete the post-installation verification steps
-
-## Getting Help
+## Support & Troubleshooting
 
 If you encounter issues during installation:
 
-- Check the [troubleshooting guide](../troubleshooting/index.md)
-- Review the [common issues](../troubleshooting/common-issues.md) page
-- Consult the [FAQ](../troubleshooting/faq.md)
-
-## Estimated Installation Time
-
-| Installation Type | Time Required | Difficulty |
-|-------------------|---------------|------------|
-| **Quick Start** | ~2 hours | Easy |
-| **Development** | ~1 hour | Easy |
-| **Production** | 1-2 days | Moderate to Advanced |
-
-!!! tip "Time-Saving Tips"
-    - Have all prerequisites ready before starting
-    - Use automation scripts where available
-    - Deploy infrastructure components in parallel when possible
-    - Review the entire guide before beginning
-
-## Support
-
-For additional support:
-
-- **Documentation**: Browse the complete [documentation](../index.md)
-- **API Reference**: See the [API documentation](../api/index.md)
-- **Community**: Join our community forums
-- **Enterprise Support**: Contact sales for enterprise support options
+1. Check the [Prerequisites](prerequisites.md) are met
+2. Review logs: `kubectl logs -n lyra -l app=lyra-backend`
+3. Verify connectivity: `kubectl get pods -n lyra`
+4. Visit [GitHub Issues](https://github.com/amreinch/lyra/issues)
 
 ---
 
-Ready to begin? Start with the [prerequisites page](prerequisites.md) to prepare your environment.
+Ready to get started? Begin with the [Prerequisites](prerequisites.md) guide.

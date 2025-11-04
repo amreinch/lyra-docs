@@ -3,8 +3,8 @@ site_url: https://docs.lyra.ovh
 site_description: Complete installation and administration guide for Lyra Platform
 site_author: Lyra Team
 
-# Repository (optional - update with your repo URL)
-repo_url: https://github.com/your-org/lyra
+# Repository
+repo_url: https://github.com/amreinch/lyra
 repo_name: lyra
 
 theme:
@@ -81,58 +81,15 @@ extra_javascript:
 # Navigation
 nav:
   - Home: index.md
-  - Installation Guide:
+  - Installation & Updates:
     - installation/index.md
     - Prerequisites: installation/prerequisites.md
-    - Kubernetes Setup: installation/kubernetes.md
-    - Storage Setup (Ceph): installation/storage.md
-    - Networking (MetalLB): installation/networking.md
-    - Ingress Controller: installation/ingress.md
-    - Harbor Registry: installation/harbor.md
-    - Rancher Setup: installation/rancher.md
-    - PostgreSQL Database: installation/postgresql.md
-    - Redis Cache: installation/redis.md
-    - LDAP Server (Optional): installation/ldap.md
-    - Lyra Application: installation/lyra.md
-    - Post-Installation: installation/post-installation.md
-  - Administration Guide:
-    - admin/index.md
-    - User Management: admin/user-management.md
-    - Tenant Management: admin/tenant-management.md
-    - Role & Permissions: admin/roles-permissions.md
-    - LDAP Integration: admin/ldap-integration.md
-    - Kubernetes Integration: admin/kubernetes.md
-    - AI Systems: admin/ai-systems.md
-    - System Settings: admin/system-settings.md
-    - Monitoring: admin/monitoring.md
-    - Backup & Restore: admin/backup-restore.md
-  - User Guide:
-    - user/index.md
-    - Getting Started: user/getting-started.md
-    - Profile Settings: user/profile.md
-    - Working with Tenants: user/tenants.md
-  - API Reference:
-    - api/index.md
-    - Authentication: api/authentication.md
-    - Users API: api/users.md
-    - Tenants API: api/tenants.md
-    - AI Systems API: api/ai-systems.md
-  - Troubleshooting:
-    - troubleshooting/index.md
-    - Common Issues: troubleshooting/common-issues.md
-    - Database Issues: troubleshooting/database.md
-    - Kubernetes Issues: troubleshooting/kubernetes.md
-    - LDAP Issues: troubleshooting/ldap.md
-    - Performance: troubleshooting/performance.md
-  - Development:
-    - development/index.md
-    - Architecture: development/architecture.md
-    - Development Setup: development/setup.md
-    - Contributing: development/contributing.md
+    - Initial Deployment: installation/initial-deployment.md
+    - Updates & Maintenance: installation/updates.md
 
 # Footer
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/your-org/lyra
+      link: https://github.com/amreinch/lyra
   generator: false  # Remove "Made with Material for MkDocs" footer
