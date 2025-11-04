@@ -234,6 +234,29 @@ Lyra requires persistent storage for databases, caches, and tenant data.
 **Minimum storage**: 100GB
 **Recommended**: 500GB+ with Ceph/Rook cluster
 
+### Additional Storage Disk
+
+**Required**: Each Kubernetes node should have a dedicated storage disk (e.g., `/dev/sdb`)
+
+- **Disk state**: Raw/unformatted disk
+- **Purpose**: Used by Ceph/Rook for persistent storage
+- **Size**: 100GB minimum, 500GB+ recommended per node
+- **Format**: Leave unformatted - Ceph will manage the disk directly
+
+**Example:**
+```bash
+# Check available disks
+lsblk
+
+# Expected: Unformatted disk like sdb, sdc, etc.
+# NAME   MAJ:MIN RM   SIZE RO TYPE MOUNTPOINT
+# sda      8:0    0   100G  0 disk
+# └─sda1   8:1    0   100G  0 part /
+# sdb      8:16   0   500G  0 disk          <- Use this for storage
+```
+
+**Important**: Do NOT format or partition the storage disk. Ceph requires raw block devices.
+
 ### Storage Classes Required
 
 You need at least one of these storage types:
