@@ -154,11 +154,11 @@ Once Rancher is ready:
 2. You will see the Rancher login screen
 3. Retrieve the bootstrap password:
    ```bash
-   # Using container name
-   docker logs rancher 2>&1 | grep "Bootstrap Password:"
+   # Using container name (simplest method)
+   sudo docker logs rancher 2>&1 | grep "Bootstrap Password:"
 
-   # Or automatically using container ID
-   docker logs $(docker ps -q -f name=rancher) 2>&1 | grep "Bootstrap Password:"
+   # Or automatically using container ID (if you need it)
+   sudo sh -c 'docker logs $(docker ps -q -f name=rancher) 2>&1 | grep "Bootstrap Password:"'
    ```
 4. Copy the password from the output
 5. Login with the bootstrap password and set your new admin password
