@@ -13,10 +13,10 @@ services:
       - "8444:443"  # HTTPS (using 8444 to avoid conflict with Harbor's 443)
     networks:
       - lyra-network
-    volumes:
-      # Optional: Mount Let's Encrypt certificates (uncomment to use)
-      # - /etc/letsencrypt/live/docs.lyra.ovh/fullchain.pem:/etc/nginx/ssl/nginx.crt:ro
-      # - /etc/letsencrypt/live/docs.lyra.ovh/privkey.pem:/etc/nginx/ssl/nginx.key:ro
+    # Uncomment volumes below to use Let's Encrypt certificates:
+    # volumes:
+    #   - /etc/letsencrypt/live/docs.lyra.ovh/fullchain.pem:/etc/nginx/ssl/nginx.crt:ro
+    #   - /etc/letsencrypt/live/docs.lyra.ovh/privkey.pem:/etc/nginx/ssl/nginx.key:ro
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
       interval: 30s
