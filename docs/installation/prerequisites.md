@@ -1,276 +1,376 @@
 # Prerequisites
 
-Before deploying Lyra Platform, ensure your environment meets these requirements.
+Before deploying Lyra Platform, ensure you have access to the required services and your environment meets these requirements.
 
-## Infrastructure Requirements
+## 1. Harbor Registry Access
 
-### Kubernetes Cluster
+**REQUIRED**: You need access to Lyra's container registry to pull the application images.
 
-**Minimum Requirements:**
-- Kubernetes version: **1.24+** (Recommended: **1.27+**)
-- Worker nodes: **3+** nodes
-- CPU: **8+ cores** per node
-- Memory: **16GB+** per node
-- Storage: **100GB+** available
+### Registry Information
 
-**Recommended for Production:**
-- Kubernetes version: **1.27+**
-- Worker nodes: **5+** nodes
-- CPU: **16+ cores** per node
-- Memory: **32GB+** per node
-- Storage: **500GB+** Ceph cluster
+- **Registry URL**: `registry.lyra.ovh`
+- **Project**: `lyra`
+- **Required Images**:
+  - `lyra-frontend` - React web interface
+  - `lyra-backend` - FastAPI REST API
+  - `lyra-scheduler` - Background job processor
 
-### Storage Backend
+### Getting Access
 
-Lyra requires persistent storage for:
+Contact the Lyra team to receive:
+
+1. **Harbor Account Credentials**
+   - Username (e.g., `robot$your-organization`)
+   - Password/Token
+
+2. **Access Permissions**
+   - Pull permissions for `lyra` project
+   - Access to Helm chart repository
+
+### Verify Access
+
+Once you receive your credentials, verify you can access the registry:
+
+```bash
+# Login to Harbor
+docker login registry.lyra.ovh
+Username: robot$your-organization
+Password: [your-token]
+
+# Verify you can see the images
+curl -u "robot\$your-organization:[your-token]" \
+  https://registry.lyra.ovh/api/v2.0/projects/lyra/repositories
+```
+
+**Expected response**: List of repositories including `lyra-frontend`, `lyra-backend`, `lyra-scheduler`
+
+---
+
+## 2. Kubernetes Cluster
+
+A functioning Kubernetes cluster is required to deploy Lyra Platform.
+
+### Minimum Requirements
+
+- **Kubernetes version**: 1.24+ (Recommended: 1.27+)
+- **Worker nodes**: 3+ nodes
+- **CPU**: 8+ cores per node
+- **Memory**: 16GB+ per node
+- **Storage**: 100GB+ available
+
+### Recommended for Production
+
+- **Kubernetes version**: 1.27+
+- **Worker nodes**: 5+ nodes
+- **CPU**: 16+ cores per node
+- **Memory**: 32GB+ per node
+- **Storage**: 500GB+ with dedicated storage cluster
+
+### Supported Kubernetes Distributions
+
+- **RKE2** (Recommended)
+- **K3s**
+- **Kubeadm**
+- **Managed Kubernetes** (EKS, AKS, GKE)
+
+### Verify Kubernetes Access
+
+```bash
+# Check cluster connection
+kubectl cluster-info
+
+# Check node status
+kubectl get nodes
+
+# Expected: All nodes in Ready state
+```
+
+---
+
+## 3. Storage
+
+Lyra requires persistent storage for databases, caches, and tenant data.
+
+### Storage Requirements
+
+**What needs storage:**
 - PostgreSQL database
 - Redis cache
-- Tenant-specific AI model storage
-- Application logs and backups
+- AI model files (per tenant)
+- Application backups
 
-**Supported Storage:**
-- **Ceph/Rook** (Recommended) - RBD (block) and CephFS (shared filesystem)
-- **NFS** - For shared storage
-- **Local PV** - Development only
+**Minimum storage**: 100GB
+**Recommended**: 500GB+ with Ceph/Rook cluster
 
-**Storage Classes Required:**
-- `rook-ceph-block` (or equivalent) - For RBD block storage
-- `rook-cephfs` (or equivalent) - For shared filesystem storage
+### Storage Classes Required
 
-### Container Registry
+You need at least one of these storage types:
 
-**Harbor Registry:**
-- Version: **2.8+**
-- Accessible from Kubernetes cluster
-- Robot account with push/pull permissions
-- Helm chart repository enabled
+1. **Block Storage** (RWO - ReadWriteOnce)
+   - For databases (PostgreSQL)
+   - Storage class example: `rook-ceph-block`, `local-path`, `gp2`
 
-**Example Setup:**
-- Registry URL: `registry.lyra.ovh`
-- Project: `lyra`
-- Robot Account: `robot$lyra-deployer`
+2. **Shared Storage** (RWX - ReadWriteMany) *(Optional)*
+   - For AI model sharing between pods
+   - Storage class example: `rook-cephfs`, `nfs-client`
 
-## Network Requirements
+### Verify Storage Classes
+
+```bash
+# List available storage classes
+kubectl get storageclass
+
+# You should see at least one storage class marked as (default)
+```
+
+**Example output:**
+```
+NAME                   PROVISIONER                     AGE
+rook-ceph-block       rook-ceph.rbd.csi.ceph.com      30d
+rook-cephfs           rook-ceph.cephfs.csi.ceph.com   30d
+```
+
+---
+
+## 4. Database (PostgreSQL)
+
+Lyra requires PostgreSQL for application data storage.
+
+### Requirements
+
+- **PostgreSQL version**: 13+ (Recommended: 15+)
+- **Database size**: 10GB+ (grows with usage)
+- **Backup**: Automated backup strategy required
+
+### Options
+
+**Option A: Managed Database Service** (Recommended)
+- AWS RDS PostgreSQL
+- Azure Database for PostgreSQL
+- Google Cloud SQL
+- Automated backups and high availability included
+
+**Option B: In-Cluster PostgreSQL**
+- Deploy PostgreSQL in Kubernetes
+- Requires persistent volume
+- Manual backup configuration needed
+
+### What You Need
+
+Either:
+- Access credentials to existing PostgreSQL instance, OR
+- Ability to provision PostgreSQL in your cluster
+
+**Connection details required:**
+```
+Host: postgresql.lyra.svc.cluster.local
+Port: 5432
+Database: lyra
+Username: lyra_user
+Password: [secure password]
+```
+
+---
+
+## 5. Redis Cache
+
+Lyra uses Redis for session management and caching.
+
+### Requirements
+
+- **Redis version**: 6+ (Recommended: 7+)
+- **High availability**: Redis Sentinel recommended for production
+
+### Options
+
+**Option A: Managed Redis** (Recommended)
+- AWS ElastiCache
+- Azure Cache for Redis
+- Google Cloud Memorystore
+
+**Option B: In-Cluster Redis**
+- Deploy Redis in Kubernetes
+- Use Redis Sentinel for HA
+- Persistent volume for AOF backups
+
+### What You Need
+
+Either:
+- Access credentials to existing Redis instance, OR
+- Ability to provision Redis in your cluster
+
+**Connection details required:**
+```
+Host: redis-master.lyra.svc.cluster.local
+Port: 6379
+Password: [secure password]
+```
+
+---
+
+## 6. Ingress & Networking
+
+External access to Lyra requires ingress configuration.
 
 ### Ingress Controller
 
-**Required:**
-- Nginx Ingress Controller (Recommended) or Traefik
-- MetalLB or cloud load balancer for external access
-- Wildcard DNS or individual A records
+**Required**: One of the following
+- Nginx Ingress Controller (Recommended)
+- Traefik
+- HAProxy Ingress
 
-**DNS Records:**
-- `lyra.yourdomain.com` → Lyra frontend
-- `api.lyra.yourdomain.com` → Lyra backend API (optional, can use same domain)
+### Load Balancer
+
+**Required**: External IP assignment
+- MetalLB (for bare-metal clusters)
+- Cloud provider LoadBalancer (ELB, ALB, etc.)
+
+### DNS Configuration
+
+**Required**: DNS records pointing to your cluster
+
+Example:
+- `lyra.yourdomain.com` → Your cluster's external IP
+- `*.lyra.yourdomain.com` → Your cluster's external IP (wildcard)
 
 ### SSL/TLS Certificates
 
 **Options:**
-1. **Let's Encrypt** (Recommended for production)
-   - cert-manager installed in cluster
-   - HTTP-01 or DNS-01 challenge configured
+
+1. **Let's Encrypt** (Recommended)
+   - Free automated certificates
+   - Requires cert-manager in cluster
+   - HTTP-01 or DNS-01 challenge
 
 2. **Manual Certificates**
-   - Valid SSL certificate and private key
-   - Stored as Kubernetes Secret
+   - Bring your own SSL certificate
+   - Store as Kubernetes Secret
 
 3. **Self-Signed** (Development only)
-   - Generated during deployment
-   - Browser warnings expected
+   - Auto-generated during deployment
+   - Browser security warnings
 
-### Firewall & Network Policies
+---
 
-**Required Ports:**
-- `443` (HTTPS) - Frontend and API access
-- `80` (HTTP) - Redirect to HTTPS
+## 7. Required Tools
 
-**Kubernetes Internal:**
-- `5432` - PostgreSQL
-- `6379` - Redis
-- `8000` - Backend API (internal)
-- `3000` - Frontend dev server (development only)
+Install these tools on your workstation/deployment machine:
 
-## Software Dependencies
-
-### Required Tools
-
-**On Deployment Machine:**
+### Docker
 ```bash
-# Docker for building images
-docker --version  # 20.10+
-
-# kubectl for Kubernetes management
-kubectl version --client  # 1.24+
-
-# Helm for chart management
-helm version  # 3.10+
-
-# Git for version control
-git --version  # 2.30+
+docker --version
+# Required: 20.10+
 ```
 
-### Optional Tools
+**Why**: Used only if you need to build custom images (not typical)
 
-**Recommended:**
+### kubectl
 ```bash
-# Rancher CLI (if using Rancher)
-rancher --version
-
-# Harbor CLI (for registry management)
-harbor version
-
-# k9s (for cluster monitoring)
-k9s version
+kubectl version --client
+# Required: 1.24+
 ```
 
-## Database Requirements
+**Why**: Kubernetes cluster management
 
-### PostgreSQL
-
-**Version:** 13+ (Recommended: 15+)
-
-**Options:**
-1. **Managed Database** (Recommended for production)
-   - Cloud provider managed PostgreSQL
-   - Automatic backups and high availability
-   - Example: AWS RDS, Azure Database for PostgreSQL, Google Cloud SQL
-
-2. **In-Cluster PostgreSQL**
-   - Deployed via Helm chart
-   - Persistent volume for data
-   - Regular backup strategy required
-
-**Database Configuration:**
-```yaml
-host: postgresql.lyra.svc.cluster.local
-port: 5432
-database: lyra
-username: lyra_user
-password: [secure password]
-```
-
-**Required Extensions:**
-- `uuid-ossp` - For UUID generation
-- `pg_trgm` - For text search (optional)
-
-### Redis
-
-**Version:** 6+ (Recommended: 7+)
-
-**Options:**
-1. **Managed Redis** (Recommended for production)
-   - Cloud provider managed Redis
-   - Automatic failover with Redis Sentinel
-
-2. **In-Cluster Redis**
-   - Deployed via Helm chart
-   - Redis Sentinel for high availability
-   - Persistent volume for AOF/RDB backups
-
-**Redis Configuration:**
-```yaml
-host: redis-master.lyra.svc.cluster.local
-port: 6379
-password: [secure password]
-sentinel:
-  enabled: true
-  master: mymaster
-```
-
-## Access & Permissions
-
-### Kubernetes RBAC
-
-**Service Account Requirements:**
-- Namespace admin permissions for Lyra namespace
-- Permissions to create/delete namespaces (for tenant provisioning)
-- StorageClass list/read permissions
-- PVC/PV create/delete permissions
-
-**Example ClusterRole:**
-```yaml
-apiVersion: rbac.authorization.k8s.io/v1
-kind:ClusterRole
-metadata:
-  name: lyra-provisioner
-rules:
-- apiGroups: [""]
-  resources: ["namespaces", "persistentvolumeclaims", "persistentvolumes"]
-  verbs: ["create", "delete", "get", "list", "watch"]
-- apiGroups: ["storage.k8s.io"]
-  resources: ["storageclasses"]
-  verbs: ["get", "list"]
-```
-
-### Harbor Registry Access
-
-**Required:**
-1. **Robot Account** with push/pull permissions
-2. **Kubernetes Secret** for image pulling:
-
+### Helm
 ```bash
-kubectl create secret docker-registry harbor-registry-secret \
-  --docker-server=registry.lyra.ovh \
-  --docker-username=robot$lyra-deployer \
-  --docker-password=<robot-token> \
-  --namespace=lyra
+helm version
+# Required: 3.10+
 ```
+
+**Why**: Lyra is deployed via Helm chart
+
+### Git
+```bash
+git --version
+# Required: 2.30+
+```
+
+**Why**: Version control and deployment scripts
+
+---
 
 ## Pre-Installation Checklist
 
-Before proceeding to deployment, verify:
+Before proceeding to installation, verify:
 
-- [ ] Kubernetes cluster is running and accessible
-- [ ] kubectl context is set to correct cluster
-- [ ] Storage classes are available (`kubectl get sc`)
-- [ ] Ingress controller is installed
-- [ ] MetalLB or LoadBalancer is configured
-- [ ] Harbor registry is accessible
-- [ ] Harbor robot account created
-- [ ] DNS records are configured
-- [ ] SSL certificates are ready (or cert-manager is configured)
-- [ ] PostgreSQL database is provisioned
-- [ ] Redis instance is provisioned
-- [ ] Docker is installed on build machine
-- [ ] Git repository access configured
+### Access & Credentials
+- [ ] Harbor registry credentials received
+- [ ] Can login to `registry.lyra.ovh`
+- [ ] Can see `lyra` project images
 
-## Environment-Specific Notes
+### Kubernetes
+- [ ] Kubernetes cluster is running
+- [ ] `kubectl` can connect to cluster
+- [ ] At least 3 worker nodes in Ready state
+- [ ] Sufficient CPU and memory available
 
-### Development Environment
+### Storage
+- [ ] At least one StorageClass available
+- [ ] Can provision PersistentVolumeClaims
+- [ ] Sufficient storage capacity (100GB+)
 
-For development/testing:
-- Single-node Kubernetes (k3s, minikube, kind) acceptable
-- Local storage or hostPath volumes OK
-- Self-signed certificates OK
-- In-cluster PostgreSQL and Redis sufficient
+### Database & Cache
+- [ ] PostgreSQL 13+ accessible or provisionable
+- [ ] Redis 6+ accessible or provisionable
+- [ ] Database credentials prepared
 
-### Staging Environment
+### Networking
+- [ ] Ingress controller installed
+- [ ] LoadBalancer can assign external IP
+- [ ] DNS records configured (or ready to configure)
+- [ ] SSL certificate ready or cert-manager installed
 
-For staging/QA:
-- Multi-node Kubernetes cluster recommended
-- Persistent storage with backups
-- Valid SSL certificates
-- Separate database instances
-- Resource quotas enabled
+### Tools
+- [ ] kubectl installed and configured
+- [ ] Helm 3.10+ installed
+- [ ] Git installed
 
-### Production Environment
+---
 
-For production deployments:
-- High-availability Kubernetes cluster (3+ master nodes)
-- Dedicated storage cluster (Ceph recommended)
-- Valid SSL certificates with auto-renewal
-- Managed database services (RDS, Cloud SQL, etc.)
-- Managed Redis with Sentinel
-- Monitoring and alerting (Prometheus, Grafana)
-- Regular backup strategy
-- Disaster recovery plan
+## Quick Verification Commands
+
+Run these commands to verify your environment:
+
+```bash
+# 1. Harbor access
+docker login registry.lyra.ovh
+
+# 2. Kubernetes connection
+kubectl cluster-info
+kubectl get nodes
+
+# 3. Storage classes
+kubectl get storageclass
+
+# 4. Ingress controller
+kubectl get pods -n ingress-nginx
+# or
+kubectl get pods -n kube-system | grep traefik
+
+# 5. Available resources
+kubectl top nodes
+```
+
+---
+
+## Getting Help
+
+If you don't meet these prerequisites:
+
+1. **Missing Harbor access** → Contact Lyra team for registry credentials
+2. **No Kubernetes cluster** → See Kubernetes setup guides
+3. **Storage questions** → Contact your infrastructure team
+4. **Database/Redis hosting** → Consider managed services
 
 ---
 
 ## Next Steps
 
-Once you've met all prerequisites, proceed to:
+✅ **Prerequisites met?**
 
-**→ [Initial Deployment](initial-deployment.md)**
+Proceed to: **[Initial Deployment](initial-deployment.md)**
 
-Need help? Check our [troubleshooting guide](../troubleshooting/index.md) or [open an issue](https://github.com/amreinch/lyra/issues).
+---
+
+**Need assistance?** Contact Lyra support or [open an issue](https://github.com/amreinch/lyra/issues)
