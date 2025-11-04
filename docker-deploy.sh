@@ -32,7 +32,12 @@ check_docker() {
         exit 1
     fi
 
-    if ! command -v docker-compose &> /dev/null && ! docker compose version &> /dev/null; then
+    # Check for docker-compose (standalone) or docker compose (plugin)
+    if command -v docker-compose &> /dev/null; then
+        DOCKER_COMPOSE="docker-compose"
+    elif docker compose version &> /dev/null 2>&1; then
+        DOCKER_COMPOSE="docker compose"
+    else
         log_error "Docker Compose is not installed. Please install Docker Compose first."
         exit 1
     fi
@@ -67,27 +72,27 @@ EOF
 
 cmd_start() {
     log_info "Starting Lyra Documentation container..."
-    docker-compose up -d
+    $DOCKER_COMPOSE up -d
     log_info "Documentation is now running at http://localhost:8080"
 }
 
 cmd_stop() {
     log_info "Stopping Lyra Documentation container..."
-    docker-compose down
+    $DOCKER_COMPOSE down
     log_info "Container stopped"
 }
 
 cmd_restart() {
     log_info "Restarting Lyra Documentation container..."
-    docker-compose restart
+    $DOCKER_COMPOSE restart
     log_info "Container restarted"
 }
 
 cmd_rebuild() {
     log_info "Rebuilding Lyra Documentation container (no cache)..."
-    docker-compose down
-    docker-compose build --no-cache
-    docker-compose up -d
+    $DOCKER_COMPOSE down
+    $DOCKER_COMPOSE build --no-cache
+    $DOCKER_COMPOSE up -d
     log_info "Container rebuilt and started"
 }
 
@@ -103,25 +108,25 @@ cmd_update() {
     fi
 
     log_info "Rebuilding container..."
-    docker-compose down
-    docker-compose build --no-cache
-    docker-compose up -d
+    $DOCKER_COMPOSE down
+    $DOCKER_COMPOSE build --no-cache
+    $DOCKER_COMPOSE up -d
     log_info "Documentation updated and restarted"
 }
 
 cmd_logs() {
     log_info "Showing container logs (Ctrl+C to exit)..."
-    docker-compose logs -f
+    $DOCKER_COMPOSE logs -f
 }
 
 cmd_status() {
     log_info "Container status:"
-    docker-compose ps
+    $DOCKER_COMPOSE ps
 }
 
 cmd_shell() {
     log_info "Opening shell in container..."
-    docker-compose exec lyra-docs sh
+    $DOCKER_COMPOSE exec lyra-docs sh
 }
 
 cmd_clean() {
@@ -129,7 +134,7 @@ cmd_clean() {
     read -r response
     if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]; then
         log_info "Cleaning up..."
-        docker-compose down
+        $DOCKER_COMPOSE down
         docker rmi lyra-docs:latest 2>/dev/null || true
         log_info "Cleanup complete"
     else
