@@ -2,7 +2,72 @@
 
 Before deploying Lyra Platform, ensure you have access to the required services and your environment meets these requirements.
 
-## 1. Registry Access
+## 1. Rancher Management Server
+
+**REQUIRED**: Rancher is used to manage Kubernetes clusters and deploy Lyra Platform via Helm charts.
+
+### System Requirements
+
+- **Operating System**: Linux (Ubuntu 20.04+, Debian 11+, RHEL 8+, or similar)
+- **Docker**: Docker Engine installed and running
+- **Network**: Dedicated management server (recommended to be separate from Kubernetes cluster nodes)
+
+### Why Separate from Kubernetes Cluster?
+
+**Best Practice**: Install Rancher on a dedicated Linux system that is NOT part of the Kubernetes cluster you will manage. This provides:
+
+- Management interface remains available even if cluster has issues
+- Easier troubleshooting and maintenance
+- Better security isolation
+- Ability to manage multiple clusters from one Rancher instance
+
+### Install Docker
+
+If Docker is not yet installed on your Rancher management server:
+
+```bash
+# Ubuntu/Debian
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh get-docker.sh
+
+# Verify installation
+docker --version
+
+# Enable Docker to start on boot
+sudo systemctl enable docker
+sudo systemctl start docker
+```
+
+### Install Rancher
+
+Once Docker is installed, deploy Rancher:
+
+```bash
+# Run Rancher container
+sudo docker run -d \
+  --name rancher \
+  --restart=unless-stopped \
+  -p 80:80 -p 443:443 \
+  --privileged \
+  rancher/rancher:latest
+
+# Check Rancher is running
+docker ps | grep rancher
+```
+
+### Access Rancher UI
+
+1. Open browser to `https://your-rancher-server-ip`
+2. Retrieve the bootstrap password:
+   ```bash
+   docker logs rancher 2>&1 | grep "Bootstrap Password:"
+   ```
+3. Complete initial setup and create admin password
+4. Rancher is now ready to import or create Kubernetes clusters
+
+---
+
+## 2. Registry Access
 
 **REQUIRED**: You need access to Lyra's container registry to pull the application images.
 
@@ -38,7 +103,7 @@ curl -u "[your-username]:[your-password]" \
 
 ---
 
-## 2. Kubernetes Cluster
+## 3. Kubernetes Cluster
 
 A functioning Kubernetes cluster is required to deploy Lyra Platform.
 
@@ -79,7 +144,7 @@ kubectl get nodes
 
 ---
 
-## 3. Storage
+## 4. Storage
 
 Lyra requires persistent storage for databases, caches, and tenant data.
 
@@ -124,7 +189,7 @@ rook-cephfs           rook-ceph.cephfs.csi.ceph.com   30d
 
 ---
 
-## 4. Database (PostgreSQL)
+## 5. Database (PostgreSQL)
 
 Lyra requires PostgreSQL for application data storage.
 
@@ -164,7 +229,7 @@ Password: [secure password]
 
 ---
 
-## 5. Redis Cache
+## 6. Redis Cache
 
 Lyra uses Redis for session management and caching.
 
@@ -200,7 +265,7 @@ Password: [secure password]
 
 ---
 
-## 6. Ingress & Networking
+## 7. Ingress & Networking
 
 External access to Lyra requires ingress configuration.
 
@@ -244,7 +309,7 @@ Example:
 
 ---
 
-## 7. Required Tools
+## 8. Required Tools
 
 Install these tools on your workstation/deployment machine:
 
