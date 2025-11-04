@@ -158,8 +158,8 @@ validate_args() {
         exit 1
     fi
 
-    # Validate domain format
-    if ! [[ "$DOMAIN" =~ ^[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9]\.[a-zA-Z]{2,}$ ]]; then
+    # Validate domain format (allow subdomains and various TLDs)
+    if ! [[ "$DOMAIN" =~ ^([a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$ ]]; then
         print_error "Invalid domain format: $DOMAIN"
         exit 1
     fi
