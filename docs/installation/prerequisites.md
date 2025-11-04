@@ -182,14 +182,14 @@ Lyra Platform requires a Kubernetes cluster with adequate server resources.
 
 | Component | Quantity | CPU | Memory | OS Disk (`/dev/sda`) | Storage Disks (Ceph/Rook) |
 |-----------|----------|-----|--------|---------------------|---------------------------|
-| **Control Plane Nodes** | 1 node | 4+ cores | 8GB+ | 50GB+ | Not required |
+| **Control Plane Nodes** | 1 node | 2 cores | 4GB | 50GB+ | Not required |
 | **Worker Nodes** | 3+ nodes | 8+ cores per node | 16GB+ per node | 50GB+ per node | 1x 100GB+ disk per node (e.g., `/dev/sdb`) |
 
 ### Recommended for Production
 
 | Component | Quantity | CPU | Memory | OS Disk (`/dev/sda`) | Storage Disks (Ceph/Rook) |
 |-----------|----------|-----|--------|---------------------|---------------------------|
-| **Control Plane Nodes (HA)** | 3 nodes | 8+ cores per node | 16GB+ per node | 100GB+ per node | Not required |
+| **Control Plane Nodes (HA)** | 3 nodes | 4 cores per node | 8GB per node | 100GB+ per node | Not required |
 | **Worker Nodes** | 5+ nodes | 16+ cores per node | 32GB+ per node | 100GB+ per node | 1-3x 500GB+ disks per node (e.g., `/dev/sdb`, `/dev/sdc`, `/dev/sdd`) |
 
 **Important Notes:**
