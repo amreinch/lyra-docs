@@ -180,19 +180,23 @@ Lyra Platform requires a Kubernetes cluster with adequate server resources.
 
 ### Minimum Requirements (Development/Testing)
 
-| Component | Quantity | CPU | Memory | Disk (OS) |
-|-----------|----------|-----|--------|-----------|
-| **Control Plane Nodes** | 1 node | 4+ cores | 8GB+ | 100GB+ (`/dev/sda`) |
-| **Worker Nodes** | 3+ nodes | 8+ cores per node | 16GB+ per node | 100GB+ per node (`/dev/sda`) |
+| Component | Quantity | CPU | Memory | OS Disk (`/dev/sda`) | Storage Disks (Ceph/Rook) |
+|-----------|----------|-----|--------|---------------------|---------------------------|
+| **Control Plane Nodes** | 1 node | 4+ cores | 8GB+ | 50GB+ | Not required |
+| **Worker Nodes** | 3+ nodes | 8+ cores per node | 16GB+ per node | 50GB+ per node | 1x 100GB+ disk per node (e.g., `/dev/sdb`) |
 
 ### Recommended for Production
 
-| Component | Quantity | CPU | Memory | Disk (OS) |
-|-----------|----------|-----|--------|-----------|
-| **Control Plane Nodes (HA)** | 3 nodes | 8+ cores per node | 16GB+ per node | 200GB+ per node (`/dev/sda`) |
-| **Worker Nodes** | 5+ nodes | 16+ cores per node | 32GB+ per node | 200GB+ per node (`/dev/sda`) |
+| Component | Quantity | CPU | Memory | OS Disk (`/dev/sda`) | Storage Disks (Ceph/Rook) |
+|-----------|----------|-----|--------|---------------------|---------------------------|
+| **Control Plane Nodes (HA)** | 3 nodes | 8+ cores per node | 16GB+ per node | 100GB+ per node | Not required |
+| **Worker Nodes** | 5+ nodes | 16+ cores per node | 32GB+ per node | 100GB+ per node | 1-3x 500GB+ disks per node (e.g., `/dev/sdb`, `/dev/sdc`, `/dev/sdd`) |
 
-**Note**: Control plane nodes manage the cluster and should be dedicated to control plane workloads only. For high availability in production, always use 3 control plane nodes.
+**Important Notes:**
+- **OS Disk**: Used only for operating system and Kubernetes components (typically `/dev/sda`)
+- **Storage Disks**: Raw/unformatted disks used exclusively by Ceph/Rook for persistent storage (all disks except `/dev/sda`)
+- **Control Plane Nodes**: Manage the cluster and should be dedicated to control plane workloads only
+- **High Availability**: For production, always use 3 control plane nodes
 
 ---
 
