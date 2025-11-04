@@ -181,18 +181,22 @@ A functioning Kubernetes cluster is required to deploy Lyra Platform.
 ### Minimum Requirements
 
 - **Kubernetes version**: 1.24+ (Recommended: 1.27+)
+- **Control Plane nodes**: 1 node (single master)
 - **Worker nodes**: 3+ nodes
-- **CPU**: 8+ cores per node
-- **Memory**: 16GB+ per node
+- **CPU per worker node**: 8+ cores
+- **Memory per worker node**: 16GB+
 - **Storage**: 100GB+ available
 
 ### Recommended for Production
 
 - **Kubernetes version**: 1.27+
+- **Control Plane nodes**: 3 nodes (HA setup)
 - **Worker nodes**: 5+ nodes
-- **CPU**: 16+ cores per node
-- **Memory**: 32GB+ per node
+- **CPU per worker node**: 16+ cores
+- **Memory per worker node**: 32GB+
 - **Storage**: 500GB+ with dedicated storage cluster
+
+**Note**: Control plane nodes (master nodes) manage the cluster and should be dedicated to control plane workloads only. For high availability in production, always use 3 control plane nodes.
 
 ### Supported Kubernetes Distributions
 
