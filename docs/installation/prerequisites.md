@@ -174,48 +174,39 @@ Once Rancher is ready:
 
 ---
 
-## 3. Kubernetes Cluster
+## 3. Server Resources
 
-A functioning Kubernetes cluster is required to deploy Lyra Platform.
+Lyra Platform requires a Kubernetes cluster with adequate server resources.
 
-### Minimum Requirements
+### Minimum Requirements (Development/Testing)
 
-- **Kubernetes version**: 1.24+ (Recommended: 1.27+)
-- **Control Plane nodes**: 1 node (single master)
-- **Worker nodes**: 3+ nodes
-- **CPU per worker node**: 8+ cores
-- **Memory per worker node**: 16GB+
-- **Storage**: 100GB+ available
+**Control Plane Nodes:**
+- **Quantity**: 1 node
+- **CPU**: 4+ cores
+- **Memory**: 8GB+
+- **Disk**: 100GB+ (OS disk - typically `/dev/sda`)
+
+**Worker Nodes:**
+- **Quantity**: 3+ nodes
+- **CPU**: 8+ cores per node
+- **Memory**: 16GB+ per node
+- **Disk**: 100GB+ (OS disk - typically `/dev/sda`)
 
 ### Recommended for Production
 
-- **Kubernetes version**: 1.27+
-- **Control Plane nodes**: 3 nodes (HA setup)
-- **Worker nodes**: 5+ nodes
-- **CPU per worker node**: 16+ cores
-- **Memory per worker node**: 32GB+
-- **Storage**: 500GB+ with dedicated storage cluster
+**Control Plane Nodes (High Availability):**
+- **Quantity**: 3 nodes
+- **CPU**: 8+ cores per node
+- **Memory**: 16GB+ per node
+- **Disk**: 200GB+ (OS disk - typically `/dev/sda`)
 
-**Note**: Control plane nodes (master nodes) manage the cluster and should be dedicated to control plane workloads only. For high availability in production, always use 3 control plane nodes.
+**Worker Nodes:**
+- **Quantity**: 5+ nodes
+- **CPU**: 16+ cores per node
+- **Memory**: 32GB+ per node
+- **Disk**: 200GB+ (OS disk - typically `/dev/sda`)
 
-### Supported Kubernetes Distributions
-
-- **RKE2** (Recommended)
-- **K3s**
-- **Kubeadm**
-- **Managed Kubernetes** (EKS, AKS, GKE)
-
-### Verify Kubernetes Access
-
-```bash
-# Check cluster connection
-kubectl cluster-info
-
-# Check node status
-kubectl get nodes
-
-# Expected: All nodes in Ready state
-```
+**Note**: Control plane nodes manage the cluster and should be dedicated to control plane workloads only. For high availability in production, always use 3 control plane nodes.
 
 ---
 
@@ -234,28 +225,48 @@ Lyra requires persistent storage for databases, caches, and tenant data.
 **Minimum storage**: 100GB
 **Recommended**: 500GB+ with Ceph/Rook cluster
 
-### Additional Storage Disk
+### Additional Storage Disks
 
-**Required**: Each Kubernetes node should have a dedicated storage disk (e.g., `/dev/sdb`)
+**Required**: Each Kubernetes node should have one or more dedicated storage disks for Ceph/Rook.
 
-- **Disk state**: Raw/unformatted disk
-- **Purpose**: Used by Ceph/Rook for persistent storage
-- **Size**: 100GB minimum, 500GB+ recommended per node
-- **Format**: Leave unformatted - Ceph will manage the disk directly
+**Storage Disk Rules:**
+- **OS Disk**: `/dev/sda` is reserved for the operating system
+- **Storage Disks**: All other disks (`/dev/sdb`, `/dev/sdc`, etc.) will be used for storage
+- **Disk State**: Raw/unformatted - leave disks unformatted
+- **Format**: Do NOT format or partition storage disks - Ceph will manage them directly
 
-**Example:**
+**Minimum Configuration:**
+- **Development**: 1 additional disk per node (e.g., `/dev/sdb`)
+- **Size**: 100GB minimum per storage disk
+- **Production**: 500GB+ recommended per storage disk
+
+**Example: Single Storage Disk**
 ```bash
 # Check available disks
 lsblk
 
-# Expected: Unformatted disk like sdb, sdc, etc.
+# Expected: Unformatted disk for storage
 # NAME   MAJ:MIN RM   SIZE RO TYPE MOUNTPOINT
-# sda      8:0    0   100G  0 disk
+# sda      8:0    0   100G  0 disk           <- OS disk (do not use)
 # └─sda1   8:1    0   100G  0 part /
-# sdb      8:16   0   500G  0 disk          <- Use this for storage
+# sdb      8:16   0   500G  0 disk           <- Storage disk (will be used)
 ```
 
-**Important**: Do NOT format or partition the storage disk. Ceph requires raw block devices.
+**Example: Multiple Storage Disks**
+```bash
+# Check available disks
+lsblk
+
+# Expected: Multiple unformatted disks for storage
+# NAME   MAJ:MIN RM   SIZE RO TYPE MOUNTPOINT
+# sda      8:0    0   100G  0 disk           <- OS disk (do not use)
+# └─sda1   8:1    0   100G  0 part /
+# sdb      8:16   0   500G  0 disk           <- Storage disk (will be used)
+# sdc      8:32   0   500G  0 disk           <- Storage disk (will be used)
+# sdd      8:48   0   500G  0 disk           <- Storage disk (will be used)
+```
+
+**Important**: Ceph/Rook will automatically detect and use all raw block devices excluding `/dev/sda`. Do NOT manually format, partition, or mount these disks.
 
 ### Storage Classes Required
 
