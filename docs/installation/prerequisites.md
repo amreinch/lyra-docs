@@ -8,6 +8,8 @@ Before deploying Lyra Platform, ensure you have access to the required services 
 
 ### System Requirements
 
+To install Rancher, you need a dedicated Linux server with Docker:
+
 - **Operating System**: Linux (Ubuntu 20.04+, Debian 11+, RHEL 8+, or similar)
 - **Docker**: Docker Engine installed and running
 - **Network**: Dedicated management server (recommended to be separate from Kubernetes cluster nodes)
@@ -38,32 +40,7 @@ sudo systemctl enable docker
 sudo systemctl start docker
 ```
 
-### Install Rancher
-
-Once Docker is installed, deploy Rancher:
-
-```bash
-# Run Rancher container
-sudo docker run -d \
-  --name rancher \
-  --restart=unless-stopped \
-  -p 80:80 -p 443:443 \
-  --privileged \
-  rancher/rancher:latest
-
-# Check Rancher is running
-docker ps | grep rancher
-```
-
-### Access Rancher UI
-
-1. Open browser to `https://your-rancher-server-ip`
-2. Retrieve the bootstrap password:
-   ```bash
-   docker logs rancher 2>&1 | grep "Bootstrap Password:"
-   ```
-3. Complete initial setup and create admin password
-4. Rancher is now ready to import or create Kubernetes clusters
+**Note**: After Docker is installed, you'll need registry access (see next section) before installing Rancher.
 
 ---
 
@@ -100,6 +77,58 @@ curl -u "[your-username]:[your-password]" \
 ```
 
 **Expected response**: JSON list of available repositories in the lyra project
+
+### Install Rancher
+
+Once you have verified registry access, you can now install Rancher.
+
+**Option A: Using Docker Hub (Quick Start)**
+
+```bash
+# Pull and run Rancher from Docker Hub
+sudo docker run -d \
+  --name rancher \
+  --restart=unless-stopped \
+  -p 80:80 -p 443:443 \
+  --privileged \
+  rancher/rancher:latest
+
+# Check Rancher is running
+docker ps | grep rancher
+```
+
+**Option B: Using Lyra Registry (After Registry Access)**
+
+If you prefer to use Rancher from the Lyra registry, you can skip Option A and pull from the registry:
+
+```bash
+# Login to registry (already done in previous step)
+docker login registry.lyra.ovh
+
+# Pull Rancher from Lyra registry
+docker pull registry.lyra.ovh/lyra/rancher:latest
+
+# Run Rancher from Lyra registry
+sudo docker run -d \
+  --name rancher \
+  --restart=unless-stopped \
+  -p 80:80 -p 443:443 \
+  --privileged \
+  registry.lyra.ovh/lyra/rancher:latest
+
+# Check Rancher is running
+docker ps | grep rancher
+```
+
+### Access Rancher UI
+
+1. Open browser to `https://your-rancher-server-ip`
+2. Retrieve the bootstrap password:
+   ```bash
+   docker logs rancher 2>&1 | grep "Bootstrap Password:"
+   ```
+3. Complete initial setup and create admin password
+4. Rancher is now ready to import or create Kubernetes clusters
 
 ---
 
