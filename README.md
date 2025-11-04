@@ -1,152 +1,159 @@
 # Lyra Documentation
 
-Professional documentation site for Lyra Platform built with MkDocs and Material theme.
-
-## Overview
-
-This repository contains the complete documentation for Lyra Platform, including:
-
-- **Installation Guide**: Step-by-step deployment instructions
-- **Administration Guide**: System configuration and management
-- **User Guide**: End-user documentation
-- **API Reference**: Complete REST API documentation
-- **Troubleshooting**: Common issues and solutions
-
-## Technology Stack
-
-- **MkDocs**: Static site generator
-- **Material for MkDocs**: Professional theme
-- **Python**: Build environment
-- **Nginx/Apache**: Web server hosting
-
-## Project Structure
-
-```
-lyra-docs/
-├── docs/                      # Documentation source files
-│   ├── index.md              # Homepage
-│   ├── installation/         # Installation guides
-│   ├── admin/                # Administration guides
-│   ├── user/                 # User guides
-│   ├── api/                  # API reference
-│   ├── troubleshooting/      # Troubleshooting guides
-│   ├── development/          # Development docs
-│   ├── assets/               # Images, logos, etc.
-│   ├── stylesheets/          # Custom CSS
-│   └── javascripts/          # Custom JavaScript
-├── site/                     # Generated static site (after build)
-├── mkdocs.yml                # MkDocs configuration
-├── requirements.txt          # Python dependencies
-├── nginx.conf                # Nginx configuration example
-├── apache.conf               # Apache configuration example
-├── build.sh                  # Build script
-├── deploy.sh                 # Deployment script
-└── README.md                 # This file
-```
+Professional documentation for Lyra Platform built with MkDocs Material theme.
 
 ## Quick Start
 
-### Local Development
+```bash
+# Build documentation
+./build.sh
 
-1. **Install dependencies**:
-   ```bash
-   python3 -m venv venv
-   source venv/bin/activate
-   pip install -r requirements.txt
-   ```
+# Deploy to server
+./deploy.sh --server docs.lyra.ovh --user ubuntu
+```
 
-2. **Start development server**:
-   ```bash
-   mkdocs serve
-   ```
+**That's it!** See [SIMPLE-DEPLOY.md](SIMPLE-DEPLOY.md) for details.
 
-3. **View documentation**:
-   Open [http://localhost:8000](http://localhost:8000) in your browser
+---
 
-### Build for Production
+## What This Repository Does
 
-Build the static site:
+This repository contains:
+- 📝 **Documentation content** (Markdown files in `docs/`)
+- 🏗️ **Build system** (MkDocs with Material theme)
+- 🚀 **Deployment script** (One-command deploy to server)
+
+**What this repository does NOT do:**
+- ❌ Server configuration (Nginx/Apache)
+- ❌ SSL certificate management
+- ❌ Firewall setup
+- ❌ Infrastructure provisioning
+
+**Server setup is separate** - this repo only handles documentation!
+
+---
+
+## Repository Structure
+
+```
+lyra-docs/
+├── docs/                    # Documentation source (Markdown)
+│   ├── index.md            # Homepage
+│   ├── installation/       # Installation guides
+│   ├── admin/              # Admin documentation
+│   ├── user/               # User guides
+│   ├── api/                # API reference
+│   ├── troubleshooting/    # Troubleshooting
+│   ├── assets/             # Images, screenshots
+│   ├── stylesheets/        # Custom CSS
+│   └── javascripts/        # Custom JavaScript
+├── site/                   # Generated static site (after build)
+├── mkdocs.yml              # MkDocs configuration
+├── requirements.txt        # Python dependencies
+├── build.sh                # Build script
+├── deploy.sh               # Deployment script
+├── README.md               # This file
+└── SIMPLE-DEPLOY.md        # Deployment guide
+```
+
+---
+
+## Local Development
+
+### First Time Setup
+
+```bash
+# Clone repository
+git clone https://github.com/amreinch/lyra-docs.git
+cd lyra-docs
+
+# Set up Python environment
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+### Preview Documentation
+
+```bash
+# Start development server with live reload
+mkdocs serve
+
+# Open in browser
+open http://localhost:8000
+```
+
+Edit any `.md` file and see changes instantly!
+
+### Build Documentation
 
 ```bash
 ./build.sh
 ```
 
-This generates static HTML files in the `site/` directory.
+Generates static HTML in `site/` directory.
 
-### Deploy to Web Server
+---
 
-Deploy to your Nginx/Apache server:
+## Deployment
+
+### Prerequisites
+
+Your web server needs:
+- Nginx or Apache configured
+- Document root created (e.g., `/var/www/lyra-docs/`)
+- SSH access enabled
+
+### Deploy
 
 ```bash
-# Basic deployment
 ./deploy.sh --server docs.lyra.ovh --user ubuntu
-
-# With custom path and SSH key
-./deploy.sh --server docs.lyra.ovh --user ubuntu --path /var/www/lyra-docs --key ~/.ssh/id_rsa
 ```
 
-#### Deployment Options
+**Options:**
+- `--server SERVER`: Server address (required)
+- `--user USER`: SSH user (default: www-data)
+- `--path PATH`: Deployment path (default: /var/www/lyra-docs)
+- `--key KEY`: SSH private key file
 
-- `-s, --server SERVER`: Web server address (required)
-- `-u, --user USER`: SSH user (default: www-data)
-- `-p, --path PATH`: Deployment path (default: /var/www/lyra-docs)
-- `-k, --key KEY`: SSH private key file
-- `-h, --help`: Show help message
+**Example:**
+```bash
+./deploy.sh --server docs.lyra.ovh --user ubuntu --key ~/.ssh/id_rsa
+```
 
-## Web Server Configuration
-
-### Nginx
-
-1. **Copy configuration**:
-   ```bash
-   sudo cp nginx.conf /etc/nginx/sites-available/lyra-docs
-   ```
-
-2. **Update paths** in `/etc/nginx/sites-available/lyra-docs`:
-   - SSL certificate paths
-   - Document root path
-   - Server name
-
-3. **Enable site**:
-   ```bash
-   sudo ln -s /etc/nginx/sites-available/lyra-docs /etc/nginx/sites-enabled/
-   sudo nginx -t
-   sudo systemctl reload nginx
-   ```
-
-### Apache
-
-1. **Enable required modules**:
-   ```bash
-   sudo a2enmod ssl rewrite headers deflate
-   ```
-
-2. **Copy configuration**:
-   ```bash
-   sudo cp apache.conf /etc/apache2/sites-available/lyra-docs.conf
-   ```
-
-3. **Update paths** in `/etc/apache2/sites-available/lyra-docs.conf`:
-   - SSL certificate paths
-   - Document root path
-   - Server name
-
-4. **Enable site**:
-   ```bash
-   sudo a2ensite lyra-docs
-   sudo apache2ctl configtest
-   sudo systemctl reload apache2
-   ```
+---
 
 ## Writing Documentation
 
-### Adding New Pages
+### Add New Page
 
-1. Create a new `.md` file in the appropriate directory under `docs/`
-2. Add the page to navigation in `mkdocs.yml`
-3. Write content using Markdown
+1. Create Markdown file in `docs/`:
+   ```bash
+   nano docs/installation/kubernetes.md
+   ```
+
+2. Add to navigation in `mkdocs.yml`:
+   ```yaml
+   nav:
+     - Installation:
+       - Kubernetes: installation/kubernetes.md
+   ```
+
+3. Build and deploy:
+   ```bash
+   ./build.sh && ./deploy.sh --server docs.lyra.ovh --user ubuntu
+   ```
 
 ### Markdown Features
+
+#### Code Blocks
+
+````markdown
+```python
+def hello():
+    print("Hello, World!")
+```
+````
 
 #### Admonitions (Info Boxes)
 
@@ -157,101 +164,54 @@ Deploy to your Nginx/Apache server:
 !!! warning
     This is a warning
 
-!!! danger
-    This is a danger alert
-
 !!! tip
-    This is a helpful tip
+    This is a tip
 ```
-
-#### Code Blocks
-
-````markdown
-```python
-def hello():
-    print("Hello, World!")
-```
-
-```bash
-kubectl get pods
-```
-````
 
 #### Tables
 
 ```markdown
-| Column 1 | Column 2 | Column 3 |
-|----------|----------|----------|
-| Value 1  | Value 2  | Value 3  |
+| Column 1 | Column 2 |
+|----------|----------|
+| Value 1  | Value 2  |
 ```
 
 #### Images
 
 ```markdown
-![Alt text](assets/image.png)
+![Alt text](assets/screenshot.png)
 ```
 
-#### Links
+---
 
-```markdown
-[Link text](other-page.md)
-[External link](https://example.com)
+## Features
+
+- ✅ **Material Design** theme
+- ✅ **Light/dark mode** toggle
+- ✅ **Built-in search**
+- ✅ **Responsive design** (mobile-ready)
+- ✅ **Code syntax highlighting**
+- ✅ **Image lightbox**
+- ✅ **Copy code buttons**
+- ✅ **Table of contents**
+- ✅ **Navigation tabs**
+
+---
+
+## Update Workflow
+
+```bash
+# 1. Edit documentation
+nano docs/admin/user-management.md
+
+# 2. Preview locally (optional)
+mkdocs serve
+
+# 3. Build and deploy
+./build.sh && ./deploy.sh --server docs.lyra.ovh --user ubuntu
 ```
 
-### Adding Images
-
-1. Place images in `docs/assets/` or subdirectories
-2. Reference in markdown: `![Description](assets/image.png)`
-3. Images automatically open in lightbox (glightbox plugin)
-
-### Custom Styling
-
-- Custom CSS: Add to `docs/stylesheets/extra.css`
-- Custom JavaScript: Add to `docs/javascripts/extra.js`
-
-## Material Theme Features
-
-### Content Tabs
-
-```markdown
-=== "Tab 1"
-    Content for tab 1
-
-=== "Tab 2"
-    Content for tab 2
-```
-
-### Grid Cards
-
-```markdown
-<div class="grid cards" markdown>
-
--   :material-clock-fast:{ .lg .middle } __Feature 1__
-
-    ---
-
-    Description of feature 1
-
--   :material-check:{ .lg .middle } __Feature 2__
-
-    ---
-
-    Description of feature 2
-
-</div>
-```
-
-### Icons
-
-Use Material Design icons:
-
-```markdown
-:material-account: User icon
-:material-check: Check icon
-:octicons-alert-16: Alert icon
-```
-
-Browse icons: [Material Icons](https://squidfunk.github.io/mkdocs-material/reference/icons-emojis/)
+---
 
 ## Maintenance
 
@@ -268,82 +228,36 @@ pip install --upgrade -r requirements.txt
 mkdocs build --clean
 ```
 
-### Validate Links
+---
 
+## GitHub Repository
+
+**Repository:** https://github.com/amreinch/lyra-docs
+
+**Clone:**
 ```bash
-# Install link checker (optional)
-pip install mkdocs-linkcheck
-mkdocs build
+git clone https://github.com/amreinch/lyra-docs.git
 ```
 
-## Continuous Deployment
-
-For automated deployments, integrate with CI/CD:
-
-```yaml
-# Example GitHub Actions workflow
-name: Deploy Documentation
-
-on:
-  push:
-    branches: [main]
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
-        with:
-          python-version: '3.x'
-      - run: pip install -r requirements.txt
-      - run: mkdocs build
-      - name: Deploy
-        run: ./deploy.sh --server ${{ secrets.WEB_SERVER }} --user ${{ secrets.WEB_USER }}
-```
-
-## Troubleshooting
-
-### Build Errors
-
-**Issue**: `mkdocs: command not found`
-
-**Solution**: Activate virtual environment
+**Update:**
 ```bash
-source venv/bin/activate
+git pull
 ```
 
-**Issue**: Missing dependencies
+---
 
-**Solution**: Reinstall requirements
-```bash
-pip install -r requirements.txt
-```
+## Documentation
 
-### Deployment Issues
+- **[SIMPLE-DEPLOY.md](SIMPLE-DEPLOY.md)** - Deployment guide
+- **[MkDocs Documentation](https://www.mkdocs.org/)** - MkDocs official docs
+- **[Material Theme](https://squidfunk.github.io/mkdocs-material/)** - Theme documentation
 
-**Issue**: Permission denied on web server
-
-**Solution**: Ensure SSH user has sudo privileges or deploy to user-owned directory
-
-**Issue**: SSL certificate errors
-
-**Solution**: Update certificate paths in nginx.conf or apache.conf
+---
 
 ## License
 
-[Add your license information here]
+Part of the Lyra Platform project.
 
-## Support
+---
 
-For questions or issues with the documentation:
-- Open an issue in the repository
-- Contact the Lyra team
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test locally with `mkdocs serve`
-5. Submit a pull request
+**Happy documenting!** 📚✨
