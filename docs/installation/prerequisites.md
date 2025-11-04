@@ -180,31 +180,17 @@ Lyra Platform requires a Kubernetes cluster with adequate server resources.
 
 ### Minimum Requirements (Development/Testing)
 
-**Control Plane Nodes:**
-- **Quantity**: 1 node
-- **CPU**: 4+ cores
-- **Memory**: 8GB+
-- **Disk**: 100GB+ (OS disk - typically `/dev/sda`)
-
-**Worker Nodes:**
-- **Quantity**: 3+ nodes
-- **CPU**: 8+ cores per node
-- **Memory**: 16GB+ per node
-- **Disk**: 100GB+ (OS disk - typically `/dev/sda`)
+| Component | Quantity | CPU | Memory | Disk (OS) |
+|-----------|----------|-----|--------|-----------|
+| **Control Plane Nodes** | 1 node | 4+ cores | 8GB+ | 100GB+ (`/dev/sda`) |
+| **Worker Nodes** | 3+ nodes | 8+ cores per node | 16GB+ per node | 100GB+ per node (`/dev/sda`) |
 
 ### Recommended for Production
 
-**Control Plane Nodes (High Availability):**
-- **Quantity**: 3 nodes
-- **CPU**: 8+ cores per node
-- **Memory**: 16GB+ per node
-- **Disk**: 200GB+ (OS disk - typically `/dev/sda`)
-
-**Worker Nodes:**
-- **Quantity**: 5+ nodes
-- **CPU**: 16+ cores per node
-- **Memory**: 32GB+ per node
-- **Disk**: 200GB+ (OS disk - typically `/dev/sda`)
+| Component | Quantity | CPU | Memory | Disk (OS) |
+|-----------|----------|-----|--------|-----------|
+| **Control Plane Nodes (HA)** | 3 nodes | 8+ cores per node | 16GB+ per node | 200GB+ per node (`/dev/sda`) |
+| **Worker Nodes** | 5+ nodes | 16+ cores per node | 32GB+ per node | 200GB+ per node (`/dev/sda`) |
 
 **Note**: Control plane nodes manage the cluster and should be dedicated to control plane workloads only. For high availability in production, always use 3 control plane nodes.
 
