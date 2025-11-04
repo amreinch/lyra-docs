@@ -4,7 +4,17 @@ Run Lyra documentation as a Docker container alongside Harbor.
 
 ## Quick Start
 
-### Build and Run
+### Using Deployment Script (Recommended)
+
+```bash
+# Start documentation
+./docker-deploy.sh start
+
+# View available commands
+./docker-deploy.sh help
+```
+
+### Using Docker Compose Directly
 
 ```bash
 # Build and start container
@@ -120,6 +130,23 @@ Now you have:
 ## Update Workflow
 
 When you update documentation:
+
+### Using Deployment Script (Easiest)
+
+```bash
+cd /home/influ/lyra-docs
+
+# 1. Edit documentation
+nano docs/installation/kubernetes.md
+
+# 2. Update and rebuild (pulls git changes if repo, rebuilds, restarts)
+./docker-deploy.sh update
+
+# Or just rebuild if no git pull needed
+./docker-deploy.sh rebuild
+```
+
+### Manual Docker Compose
 
 ```bash
 cd /home/influ/lyra-docs
@@ -281,6 +308,42 @@ networks:
 ---
 
 ## Quick Reference
+
+### Using Deployment Script
+
+```bash
+# Start
+./docker-deploy.sh start
+
+# Stop
+./docker-deploy.sh stop
+
+# Restart
+./docker-deploy.sh restart
+
+# Rebuild (no cache)
+./docker-deploy.sh rebuild
+
+# Update (git pull + rebuild)
+./docker-deploy.sh update
+
+# View logs
+./docker-deploy.sh logs
+
+# Check status
+./docker-deploy.sh status
+
+# Access shell
+./docker-deploy.sh shell
+
+# Clean up completely
+./docker-deploy.sh clean
+
+# Show help
+./docker-deploy.sh help
+```
+
+### Using Docker Compose Directly
 
 ```bash
 # Build and start
