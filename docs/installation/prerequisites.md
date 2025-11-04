@@ -82,24 +82,7 @@ curl -u "[your-username]:[your-password]" \
 
 Once you have verified registry access, you can now install Rancher.
 
-**Option A: Using Docker Hub (Quick Start)**
-
-```bash
-# Pull and run Rancher from Docker Hub
-sudo docker run -d \
-  --name rancher \
-  --restart=unless-stopped \
-  -p 80:80 -p 443:443 \
-  --privileged \
-  rancher/rancher:latest
-
-# Check Rancher is running
-docker ps | grep rancher
-```
-
-**Option B: Using Lyra Registry (After Registry Access)**
-
-If you prefer to use Rancher from the Lyra registry, you can skip Option A and pull from the registry:
+**Option A: Using Lyra Registry (Recommended)**
 
 ```bash
 # Login to registry (already done in previous step)
@@ -115,6 +98,23 @@ sudo docker run -d \
   -p 80:80 -p 443:443 \
   --privileged \
   registry.lyra.ovh/lyra/rancher:latest
+
+# Check Rancher is running
+docker ps | grep rancher
+```
+
+**Option B: Using Docker Hub (Alternative)**
+
+If you prefer to use the official Rancher image from Docker Hub:
+
+```bash
+# Pull and run Rancher from Docker Hub
+sudo docker run -d \
+  --name rancher \
+  --restart=unless-stopped \
+  -p 80:80 -p 443:443 \
+  --privileged \
+  rancher/rancher:latest
 
 # Check Rancher is running
 docker ps | grep rancher
