@@ -43,6 +43,7 @@ docker-compose down
 
 **See deployment guides:**
 - **[DOCKER-DEPLOY.md](DOCKER-DEPLOY.md)** - Docker deployment (recommended)
+- **[SSL-SETUP.md](SSL-SETUP.md)** - SSL/HTTPS configuration
 - **[SIMPLE-DEPLOY.md](SIMPLE-DEPLOY.md)** - Traditional deployment
 
 ---
@@ -226,6 +227,7 @@ def hello():
 - ✅ **Copy code buttons**
 - ✅ **Table of contents**
 - ✅ **Navigation tabs**
+- ✅ **SSL/HTTPS support** (self-signed or Let's Encrypt)
 
 ---
 

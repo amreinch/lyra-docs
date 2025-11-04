@@ -12,6 +12,7 @@ __pycache__/
 README.md
 SIMPLE-DEPLOY.md
 DOCKER-DEPLOY.md
+SSL-SETUP.md
 build.sh
 deploy.sh
 docker-deploy.sh

@@ -24,7 +24,11 @@ docker-compose up -d
 curl http://localhost:8081
 ```
 
-Documentation is now available at `http://your-server:8081`
+Documentation is now available at:
+- HTTP: `http://your-server:8081` (redirects to HTTPS)
+- HTTPS: `https://your-server:8444` (self-signed certificate)
+
+**See [SSL-SETUP.md](SSL-SETUP.md) for Let's Encrypt and production SSL configuration.**
 
 ---
 
@@ -48,7 +52,9 @@ docker-compose down
 ```
 
 **Configuration:**
-- Runs on port `8081` (configurable in `docker-compose.yml`)
+- HTTP port: `8081` (redirects to HTTPS)
+- HTTPS port: `8444` (SSL/TLS enabled)
+- SSL: Self-signed certificate (can use Let's Encrypt)
 - Auto-restarts on failure
 - Health checks enabled
 
@@ -64,6 +70,7 @@ docker build -t lyra-docs:latest .
 docker run -d \
   --name lyra-docs \
   -p 8081:80 \
+  -p 8444:443 \
   --restart unless-stopped \
   lyra-docs:latest
 
@@ -122,8 +129,8 @@ sudo certbot --nginx -d docs.lyra.ovh
 ```
 
 Now you have:
-- 🐳 **Harbor**: `https://registry.lyra.ovh` → Docker (port 8080)
-- 📚 **Docs**: `https://docs.lyra.ovh` → Docker (port 8081 or another port)
+- 🐳 **Harbor**: `https://registry.lyra.ovh` → Docker (HTTP: 8080, HTTPS: 443)
+- 📚 **Docs**: `https://docs.lyra.ovh` → Docker (HTTP: 8081, HTTPS: 8444)
 
 ---
 
