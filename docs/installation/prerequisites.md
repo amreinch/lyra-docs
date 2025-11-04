@@ -2,47 +2,39 @@
 
 Before deploying Lyra Platform, ensure you have access to the required services and your environment meets these requirements.
 
-## 1. Harbor Registry Access
+## 1. Registry Access
 
 **REQUIRED**: You need access to Lyra's container registry to pull the application images.
 
 ### Registry Information
 
 - **Registry URL**: `registry.lyra.ovh`
-- **Project**: `lyra`
-- **Required Images**:
-  - `lyra-frontend` - React web interface
-  - `lyra-backend` - FastAPI REST API
-  - `lyra-scheduler` - Background job processor
+- **Container Images Project**: `lyra` (contains all application images)
+- **Helm Charts Project**: `lyra-charts` (contains deployment charts)
 
 ### Getting Access
 
-Contact the Lyra team to receive:
+Contact the Lyra team to receive your registry credentials:
 
-1. **Harbor Account Credentials**
-   - Username (e.g., `robot$your-organization`)
-   - Password/Token
-
-2. **Access Permissions**
-   - Pull permissions for `lyra` project
-   - Access to Helm chart repository
+- Username and password/token
+- Pull permissions for required projects
 
 ### Verify Access
 
 Once you receive your credentials, verify you can access the registry:
 
 ```bash
-# Login to Harbor
+# Login to registry
 docker login registry.lyra.ovh
-Username: robot$your-organization
-Password: [your-token]
+Username: [your-username]
+Password: [your-password]
 
-# Verify you can see the images
-curl -u "robot\$your-organization:[your-token]" \
+# Verify access to projects
+curl -u "[your-username]:[your-password]" \
   https://registry.lyra.ovh/api/v2.0/projects/lyra/repositories
 ```
 
-**Expected response**: List of repositories including `lyra-frontend`, `lyra-backend`, `lyra-scheduler`
+**Expected response**: JSON list of available repositories in the lyra project
 
 ---
 
