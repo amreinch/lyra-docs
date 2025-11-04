@@ -198,6 +198,43 @@ Lyra Platform requires a Kubernetes cluster with adequate server resources.
 - **Control Plane Nodes**: Manage the cluster and should be dedicated to control plane workloads only
 - **High Availability**: For production, always use 3 control plane nodes
 
+### Alternative: Control Plane as Worker Node
+
+**For smaller deployments**, you can configure control plane nodes to also run application workloads by removing the default taint. This reduces the total number of nodes required.
+
+**Benefits:**
+- Fewer servers required (can start with 3 nodes instead of 4+)
+- Lower infrastructure costs
+- Simplified management for small deployments
+
+**Considerations:**
+- Control plane and application workloads compete for resources
+- Less isolation between control plane and workloads
+- Not recommended for high-traffic production environments
+- Still need 3 control plane nodes for high availability
+
+**Example Configuration:**
+
+| Deployment Type | Control Plane Nodes | Dedicated Worker Nodes | Total Nodes |
+|-----------------|---------------------|------------------------|-------------|
+| **Dedicated (Recommended)** | 3 nodes (HA) | 5+ nodes | 8+ nodes |
+| **Control Plane as Worker** | 3 nodes (HA + Worker) | 0 nodes | 3 nodes |
+| **Hybrid** | 3 nodes (HA + Worker) | 2-3 nodes | 5-6 nodes |
+
+**To enable workloads on control plane nodes:**
+```bash
+# Remove taint from control plane nodes to allow workload scheduling
+kubectl taint nodes <control-plane-node-name> node-role.kubernetes.io/control-plane:NoSchedule-
+kubectl taint nodes <control-plane-node-name> node-role.kubernetes.io/master:NoSchedule-
+```
+
+**When to use this approach:**
+- ✅ Development and testing environments
+- ✅ Small production deployments with limited resources
+- ✅ Edge deployments with hardware constraints
+- ❌ High-traffic production environments
+- ❌ Environments requiring strict isolation
+
 ---
 
 ## 4. Storage
