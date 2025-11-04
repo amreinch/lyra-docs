@@ -73,7 +73,7 @@ EOF
 cmd_start() {
     log_info "Starting Lyra Documentation container..."
     $DOCKER_COMPOSE up -d
-    log_info "Documentation is now running at http://localhost:8080"
+    log_info "Documentation is now running at http://localhost:8081"
 }
 
 cmd_stop() {

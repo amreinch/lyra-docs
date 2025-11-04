@@ -21,10 +21,10 @@ Run Lyra documentation as a Docker container alongside Harbor.
 docker-compose up -d
 
 # Access documentation
-curl http://localhost:8080
+curl http://localhost:8081
 ```
 
-Documentation is now available at `http://your-server:8080`
+Documentation is now available at `http://your-server:8081`
 
 ---
 
@@ -48,7 +48,7 @@ docker-compose down
 ```
 
 **Configuration:**
-- Runs on port `8080` (configurable in `docker-compose.yml`)
+- Runs on port `8081` (configurable in `docker-compose.yml`)
 - Auto-restarts on failure
 - Health checks enabled
 
@@ -63,7 +63,7 @@ docker build -t lyra-docs:latest .
 # Run container
 docker run -d \
   --name lyra-docs \
-  -p 8080:80 \
+  -p 8081:80 \
   --restart unless-stopped \
   lyra-docs:latest
 
@@ -89,7 +89,7 @@ Edit your Nginx configuration to proxy `docs.lyra.ovh`:
 # /etc/nginx/sites-available/docs-proxy
 
 upstream docs_backend {
-    server 127.0.0.1:8080;
+    server 127.0.0.1:8081;
 }
 
 server {
@@ -160,7 +160,7 @@ docker-compose build --no-cache
 docker-compose up -d
 
 # 3. Verify
-curl http://localhost:8080
+curl http://localhost:8081
 ```
 
 **Or use a one-liner:**
@@ -173,7 +173,7 @@ docker-compose down && docker-compose build --no-cache && docker-compose up -d
 
 ## Port Configuration
 
-By default, the container runs on port `8080`. To change:
+By default, the container runs on port `8081` (Harbor uses 8080). To change:
 
 **Edit `docker-compose.yml`:**
 
@@ -199,7 +199,7 @@ docker-compose down && docker-compose up -d
 docker-compose logs
 
 # Check if port is in use
-sudo ss -tlnp | grep 8080
+sudo ss -tlnp | grep 8081
 
 # Try different port in docker-compose.yml
 ```
@@ -214,7 +214,7 @@ docker-compose ps
 docker-compose logs lyra-docs
 
 # Test from inside server
-curl http://localhost:8080
+curl http://localhost:8081
 
 # Check firewall
 sudo ufw status
@@ -252,7 +252,7 @@ services:
   lyra-docs:
     build: ./lyra-docs
     ports:
-      - "8081:80"
+      - "8082:80"
     networks:
       - lyra-network
 

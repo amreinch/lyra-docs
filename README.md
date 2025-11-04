@@ -14,7 +14,7 @@ Professional documentation for Lyra Platform built with MkDocs Material theme.
 ./docker-deploy.sh
 ```
 
-Documentation available at `http://localhost:8080`
+Documentation available at `http://localhost:8081`
 
 **Other commands:**
 ```bash
