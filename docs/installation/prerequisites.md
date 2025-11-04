@@ -151,12 +151,20 @@ docker logs -f rancher
 Once Rancher is ready:
 
 1. Open browser to `https://your-rancher-server-ip`
-2. Retrieve the bootstrap password:
+2. You will see the Rancher login screen
+3. Retrieve the bootstrap password:
    ```bash
+   # Using container name
    docker logs rancher 2>&1 | grep "Bootstrap Password:"
+
+   # Or automatically using container ID
+   docker logs $(docker ps -q -f name=rancher) 2>&1 | grep "Bootstrap Password:"
    ```
-3. Complete initial setup and create admin password
-4. Rancher is now ready to import or create Kubernetes clusters
+4. Copy the password from the output
+5. Login with the bootstrap password and set your new admin password
+6. Rancher is now ready to import or create Kubernetes clusters
+
+**Important**: You must change the bootstrap password on first login for security.
 
 **Typical startup time**: 2-5 minutes depending on server resources
 
