@@ -136,6 +136,20 @@ docker ps | grep rancher
 
 ### Access Rancher UI
 
+**Note**: Rancher takes several minutes to fully start. During initialization, you may see log messages like "API Aggregation not ready" - this is normal.
+
+Monitor the startup process:
+
+```bash
+# Watch Rancher logs
+docker logs -f rancher
+
+# Wait for this message: "Bootstrap Password:"
+# This indicates Rancher is ready
+```
+
+Once Rancher is ready:
+
 1. Open browser to `https://your-rancher-server-ip`
 2. Retrieve the bootstrap password:
    ```bash
@@ -143,6 +157,8 @@ docker ps | grep rancher
    ```
 3. Complete initial setup and create admin password
 4. Rancher is now ready to import or create Kubernetes clusters
+
+**Typical startup time**: 2-5 minutes depending on server resources
 
 ---
 
