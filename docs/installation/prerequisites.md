@@ -84,12 +84,26 @@ Once you have verified registry access, you can now install Rancher.
 
 **Option A: Using Lyra Registry (Recommended)**
 
+First, check available Rancher versions in the registry:
+
+```bash
+# List available Rancher versions
+curl -u "[your-username]:[your-password]" \
+  https://registry.lyra.ovh/v2/lyra/rancher/tags/list
+
+# Or using the API with formatted output
+curl -u "[your-username]:[your-password]" \
+  https://registry.lyra.ovh/api/v2.0/projects/lyra/repositories/rancher/artifacts | jq -r '.[].tags[].name'
+```
+
+Then pull and run Rancher with a specific version:
+
 ```bash
 # Login to registry (already done in previous step)
 docker login registry.lyra.ovh
 
-# Pull Rancher from Lyra registry
-docker pull registry.lyra.ovh/lyra/rancher:latest
+# Pull Rancher from Lyra registry (use specific version)
+docker pull registry.lyra.ovh/lyra/rancher:v2.12.2
 
 # Run Rancher from Lyra registry
 sudo docker run -d \
@@ -97,7 +111,7 @@ sudo docker run -d \
   --restart=unless-stopped \
   -p 80:80 -p 443:443 \
   --privileged \
-  registry.lyra.ovh/lyra/rancher:latest
+  registry.lyra.ovh/lyra/rancher:v2.12.2
 
 # Check Rancher is running
 docker ps | grep rancher
