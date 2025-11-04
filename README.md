@@ -4,6 +4,17 @@ Professional documentation for Lyra Platform built with MkDocs Material theme.
 
 ## Quick Start
 
+### Option 1: Docker (Recommended)
+
+```bash
+# Build and run as Docker container
+docker-compose up -d
+```
+
+Documentation available at `http://localhost:8080`
+
+### Option 2: Traditional Deployment
+
 ```bash
 # Build documentation
 ./build.sh
@@ -12,7 +23,9 @@ Professional documentation for Lyra Platform built with MkDocs Material theme.
 ./deploy.sh --server docs.lyra.ovh --user ubuntu
 ```
 
-**That's it!** See [SIMPLE-DEPLOY.md](SIMPLE-DEPLOY.md) for details.
+**See deployment guides:**
+- **[DOCKER-DEPLOY.md](DOCKER-DEPLOY.md)** - Docker deployment (recommended)
+- **[SIMPLE-DEPLOY.md](SIMPLE-DEPLOY.md)** - Traditional deployment
 
 ---
 
