@@ -1,0 +1,138 @@
+site_name: Lyra Documentation
+site_url: https://docs.lyra.ovh
+site_description: Complete installation and administration guide for Lyra Platform
+site_author: Lyra Team
+
+# Repository (optional - update with your repo URL)
+repo_url: https://github.com/your-org/lyra
+repo_name: lyra
+
+theme:
+  name: material
+  palette:
+    # Light mode
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    # Dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - navigation.tracking
+    - navigation.indexes
+    - toc.integrate
+    - toc.follow
+    - search.suggest
+    - search.highlight
+    - content.tabs.link
+    - content.code.annotation
+    - content.code.copy
+
+  font:
+    text: Roboto
+    code: Roboto Mono
+
+  logo: assets/logo.png
+  favicon: assets/favicon.png
+
+# Extensions
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - pymdownx.details
+  - pymdownx.tabbed:
+      alternate_style: true
+  - admonition
+  - tables
+  - attr_list
+  - md_in_html
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+
+# Plugins
+plugins:
+  - search
+  - glightbox  # Image lightbox
+
+# Extra CSS
+extra_css:
+  - stylesheets/extra.css
+
+# Extra JavaScript
+extra_javascript:
+  - javascripts/extra.js
+
+# Navigation
+nav:
+  - Home: index.md
+  - Installation Guide:
+    - installation/index.md
+    - Prerequisites: installation/prerequisites.md
+    - Kubernetes Setup: installation/kubernetes.md
+    - Storage Setup (Ceph): installation/storage.md
+    - Networking (MetalLB): installation/networking.md
+    - Ingress Controller: installation/ingress.md
+    - Harbor Registry: installation/harbor.md
+    - Rancher Setup: installation/rancher.md
+    - PostgreSQL Database: installation/postgresql.md
+    - Redis Cache: installation/redis.md
+    - LDAP Server (Optional): installation/ldap.md
+    - Lyra Application: installation/lyra.md
+    - Post-Installation: installation/post-installation.md
+  - Administration Guide:
+    - admin/index.md
+    - User Management: admin/user-management.md
+    - Tenant Management: admin/tenant-management.md
+    - Role & Permissions: admin/roles-permissions.md
+    - LDAP Integration: admin/ldap-integration.md
+    - Kubernetes Integration: admin/kubernetes.md
+    - AI Systems: admin/ai-systems.md
+    - System Settings: admin/system-settings.md
+    - Monitoring: admin/monitoring.md
+    - Backup & Restore: admin/backup-restore.md
+  - User Guide:
+    - user/index.md
+    - Getting Started: user/getting-started.md
+    - Profile Settings: user/profile.md
+    - Working with Tenants: user/tenants.md
+  - API Reference:
+    - api/index.md
+    - Authentication: api/authentication.md
+    - Users API: api/users.md
+    - Tenants API: api/tenants.md
+    - AI Systems API: api/ai-systems.md
+  - Troubleshooting:
+    - troubleshooting/index.md
+    - Common Issues: troubleshooting/common-issues.md
+    - Database Issues: troubleshooting/database.md
+    - Kubernetes Issues: troubleshooting/kubernetes.md
+    - LDAP Issues: troubleshooting/ldap.md
+    - Performance: troubleshooting/performance.md
+  - Development:
+    - development/index.md
+    - Architecture: development/architecture.md
+    - Development Setup: development/setup.md
+    - Contributing: development/contributing.md
+
+# Footer
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/your-org/lyra
+  generator: false  # Remove "Made with Material for MkDocs" footer

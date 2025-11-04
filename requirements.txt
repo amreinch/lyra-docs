@@ -1,0 +1,9 @@
+# MkDocs and Material theme
+mkdocs==1.5.3
+mkdocs-material==9.5.3
+
+# Plugins
+mkdocs-glightbox==0.3.7
+
+# Extensions
+pymdown-extensions==10.7

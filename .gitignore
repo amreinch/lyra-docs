@@ -1,0 +1,44 @@
+# Python virtual environment
+venv/
+env/
+.venv/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# MkDocs build output
+site/
+
+# IDE specific files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS specific files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.bak
+*.backup
+
+# SSH keys (if accidentally placed here)
+*.pem
+*.key
+id_rsa*
+
+# Environment files
+.env
+.env.local
+
+# Backup files from deployment
+*.tar.gz
