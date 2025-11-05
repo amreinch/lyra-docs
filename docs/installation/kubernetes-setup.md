@@ -432,13 +432,13 @@ All deployments are managed through Rancher's Apps & Marketplace interface using
 
 ### Deploy via Rancher UI
 
-1. **Navigate to Apps & Marketplace:**
-   - Go to your **Lyra Platform** cluster in Rancher
-   - Click **Apps** → **Charts** in the left sidebar
+1. **Select lyra-charts repository:**
+   - Go to your **Lyra Platform** cluster in Rancher and navigate to **Apps** → **Charts**
+   - This will give you access to all Lyra infrastructure and application charts
 
-2. **Install Lyra Application:**
-   - Search for **lyra-app** in the charts list
-   - Click on the **lyra-app** chart
+2. **Install desired chart:**
+   - Browse available charts (lyra-app, postgresql, redis, etc.)
+   - Click on the chart you want to install
    - Click **Install**
 
 3. **Configure Deployment:**
