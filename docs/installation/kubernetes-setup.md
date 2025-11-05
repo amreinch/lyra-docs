@@ -375,9 +375,7 @@ After cluster creation, configure Rancher settings required for application depl
 
 **REQUIRED**: Add the Lyra OCI Helm chart repository to the project to enable deployment of Lyra applications.
 
-1. **Navigate to Apps → Repositories:**
-   - Click your cluster name in Rancher
-   - Go to **Apps** → **Repositories** in the left sidebar
+1. Go to **Lyra Platform** cluster and navigate to **Apps** → **Repositories**
 
 2. **Click Create** and configure the repository:
    - **Name:** `lyra-charts`
@@ -386,8 +384,7 @@ After cluster creation, configure Rancher settings required for application depl
    - **Authentication:** (Optional) Add Harbor credentials if required
      - **Username:** Your Harbor username
      - **Password:** Your Harbor password/token
-
-3. **Click Create** to save
+   - Click **Create** to save
 
 **Verification:**
 - The repository should appear in the list with status "Active"
