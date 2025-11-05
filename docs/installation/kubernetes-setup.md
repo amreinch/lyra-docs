@@ -52,6 +52,53 @@ This guide uses bare-metal or VM deployments with a custom cluster configuration
 
 ## Step 3: Configure Node Roles
 
+### Understanding Kubernetes Node Roles
+
+Before configuring nodes, it's important to understand the three roles in Kubernetes:
+
+#### etcd
+**Purpose**: Distributed key-value database that stores all cluster data and state.
+
+**Responsibilities**:
+- Stores cluster configuration and state
+- Maintains consistency across the cluster
+- Provides cluster-wide data persistence
+
+**Requirements**:
+- **Must be odd number** of nodes (3, 5, or 7) for quorum and fault tolerance
+- Low latency storage (SSD recommended)
+- Reliable network connectivity between etcd nodes
+
+#### Control Plane
+**Purpose**: Manages the Kubernetes cluster and makes decisions about workload scheduling.
+
+**Responsibilities**:
+- API server (kubectl commands go here)
+- Scheduler (decides which node runs which pod)
+- Controller manager (maintains desired cluster state)
+- Cloud controller manager (cloud provider integration)
+
+**Requirements**:
+- Adequate CPU and memory for cluster management
+- Should be highly available (3 nodes recommended for production)
+
+#### Worker
+**Purpose**: Runs application workloads and services.
+
+**Responsibilities**:
+- Runs containerized applications (pods)
+- Provides compute resources for workloads
+- Executes storage operations (when Ceph/Rook is deployed)
+
+**Requirements**:
+- Storage disks for Ceph/Rook (e.g., `/dev/sdb`, `/dev/sdc`)
+- Adequate CPU and memory for application workloads
+- Can be scaled horizontally (add more workers as needed)
+
+---
+
+### Deployment Strategies
+
 Rancher will display a registration command for adding nodes. Choose one of the deployment strategies below based on your infrastructure.
 
 ### Deployment Strategy A: Dedicated Roles (Recommended for Production)
@@ -131,11 +178,16 @@ This approach separates control plane and worker responsibilities for better iso
 
 ### Deployment Strategy B: Combined Roles (For Smaller Deployments)
 
-This approach combines all roles on the same nodes to reduce server count. Use odd number of nodes (3, 5, 7) for etcd quorum.
+This approach combines all roles on the same nodes to reduce server count.
 
 **Node Configuration:**
-- **All Nodes**: etcd + Control Plane + Worker (all three roles)
-- **Total Nodes**: Minimum 3 nodes (odd number required for etcd quorum)
+- **Combined Role Nodes**: etcd + Control Plane + Worker (all three roles)
+- **etcd Nodes**: Must be odd number (3, 5, or 7) for quorum
+- **Total Nodes**: Variable - you can add worker-only nodes to combined role nodes
+
+**Note**: Only the nodes with **etcd** role need to be an odd number. You can mix:
+- 3 nodes with etcd + control plane + worker (required minimum)
+- Additional worker-only nodes as needed (any number)
 
 **Benefits:**
 - Fewer servers required (3 nodes instead of 4-8)
@@ -175,23 +227,36 @@ This approach combines all roles on the same nodes to reduce server count. Use o
      --etcd --controlplane --worker
    ```
 
-4. **Repeat for all nodes** (must be odd number: 3, 5, or 7 nodes)
+4. **Repeat for combined role nodes** (must be odd number: 3, 5, or 7 nodes with etcd)
 
-5. **Wait for all nodes to become "Active"**
+5. **(Optional) Add dedicated worker nodes:**
+   If you need more capacity, you can add worker-only nodes following the steps in Strategy A.
 
-**Important**: Each node must have storage disks (e.g., `/dev/sdb`) for Ceph/Rook since they act as workers.
+6. **Wait for all nodes to become "Active"**
+
+**Important**: Each node with Worker role must have storage disks (e.g., `/dev/sdb`) for Ceph/Rook.
+
+**Example Hybrid Configuration:**
+- 3 nodes: etcd + control plane + worker (with storage disks)
+- 2 nodes: worker only (with storage disks)
+- Total: 5 nodes (3 etcd nodes for quorum + 2 additional workers for capacity)
 
 ---
 
 ### Which Strategy to Choose?
 
-| Scenario | Recommended Strategy | Node Count |
-|----------|---------------------|------------|
-| **Development/Testing** | Combined Roles | 3 nodes (all roles) |
-| **Small Production** | Combined Roles | 3-5 nodes (all roles) |
-| **Medium Production** | Dedicated Roles | 4-6 nodes (1 control + 3-5 workers) |
-| **Large Production (HA)** | Dedicated Roles | 8+ nodes (3 control + 5+ workers) |
-| **Enterprise/High-Traffic** | Dedicated Roles | 10+ nodes (3 control + 7+ workers) |
+| Scenario | Recommended Strategy | Node Count | Configuration |
+|----------|---------------------|------------|---------------|
+| **Development/Testing** | Combined Roles | 3 nodes | 3 nodes (etcd + control + worker) |
+| **Small Production** | Combined Roles | 3-5 nodes | 3 nodes (etcd + control + worker) + 0-2 workers |
+| **Medium Production** | Hybrid or Dedicated | 5-8 nodes | 3 nodes (etcd + control + worker) + 2-5 workers OR 1-3 control + 4-5 workers |
+| **Large Production (HA)** | Dedicated Roles | 8+ nodes | 3 control + 5+ workers |
+| **Enterprise/High-Traffic** | Dedicated Roles | 10+ nodes | 3 control + 7+ workers |
+
+**Key Points:**
+- **etcd nodes**: Always odd number (3, 5, or 7) for quorum
+- **Worker nodes**: Can be any number
+- **Hybrid**: Combine strategies - etcd+control+worker nodes PLUS dedicated workers
 
 ---
 
