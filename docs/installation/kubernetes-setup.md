@@ -417,7 +417,212 @@ After cluster creation, configure Rancher settings required for application depl
 
 ---
 
-## Step 6: Verify Storage Disks
+## Step 6: Deploy Lyra Applications and Services
+
+With the cluster configured and Rancher settings in place, you can now deploy Lyra Platform applications and services using Helm charts.
+
+### Deployment Overview
+
+Lyra Platform consists of multiple components that need to be deployed in order:
+
+1. **Infrastructure Services** (PostgreSQL, Redis, Storage)
+2. **Lyra Core Applications** (Backend, Frontend, Scheduler)
+
+All deployments are managed through Rancher's Apps & Marketplace interface using the Helm charts from your Harbor registry.
+
+### Deploy via Rancher UI
+
+1. **Navigate to Apps & Marketplace:**
+   - Go to your **Lyra Platform** cluster in Rancher
+   - Click **Apps** → **Charts** in the left sidebar
+
+2. **Install Lyra Application:**
+   - Search for **lyra-app** in the charts list
+   - Click on the **lyra-app** chart
+   - Click **Install**
+
+3. **Configure Deployment:**
+   - **Namespace:** Rancher will create the namespace automatically
+   - **Project:** Select **Lyra Platform**
+   - **Chart Version:** Select the desired version (e.g., `1.0.0`)
+
+4. **Configure Helm Values:**
+
+   You can configure the deployment through Rancher's UI forms or by editing the YAML directly.
+
+   **Key Configuration Sections:**
+
+   **Image Configuration:**
+   ```yaml
+   backend:
+     image:
+       repository: registry.lyra.ovh/lyra/lyra-backend
+       tag: "1.0.0"
+       pullPolicy: IfNotPresent
+     replicas: 2
+
+   frontend:
+     image:
+       repository: registry.lyra.ovh/lyra/lyra-frontend
+       tag: "1.0.0"
+       pullPolicy: IfNotPresent
+     replicas: 2
+
+   scheduler:
+     image:
+       repository: registry.lyra.ovh/lyra/lyra-scheduler
+       tag: "1.0.0"
+       pullPolicy: IfNotPresent
+     replicas: 1
+
+   imagePullSecrets:
+     - name: harbor-registry-secret
+   ```
+
+   **Database Configuration:**
+   ```yaml
+   postgresql:
+     enabled: true  # Deploy PostgreSQL as part of the chart
+     # Or use external database:
+     # enabled: false
+     # external:
+     #   host: "postgresql.lyra.svc.cluster.local"
+     #   port: 5432
+     #   database: "lyra"
+     #   existingSecret: "lyra-db-secret"
+   ```
+
+   **Redis Configuration:**
+   ```yaml
+   redis:
+     enabled: true  # Deploy Redis as part of the chart
+     # Or use external Redis:
+     # enabled: false
+     # external:
+     #   host: "redis-master.lyra.svc.cluster.local"
+     #   port: 6379
+     #   existingSecret: "lyra-redis-secret"
+   ```
+
+   **Ingress Configuration:**
+   ```yaml
+   ingress:
+     enabled: true
+     className: "nginx"
+     annotations:
+       cert-manager.io/cluster-issuer: "letsencrypt-prod"
+     hosts:
+       - host: lyra.yourdomain.com
+         paths:
+           - path: /
+             pathType: Prefix
+     tls:
+       - secretName: lyra-tls
+         hosts:
+           - lyra.yourdomain.com
+   ```
+
+5. **Click Install** and wait for deployment to complete
+
+### Verify Deployment
+
+**Check Pod Status:**
+```bash
+kubectl get pods -n lyra
+```
+
+**Expected output:**
+```
+NAME                              READY   STATUS    RESTARTS   AGE
+lyra-backend-7d9f8c4b5d-abc12     1/1     Running   0          2m
+lyra-backend-7d9f8c4b5d-def34     1/1     Running   0          2m
+lyra-frontend-6c8d7b5a4e-ghi56    1/1     Running   0          2m
+lyra-frontend-6c8d7b5a4e-jkl78    1/1     Running   0          2m
+lyra-scheduler-5b7c8d9e6f-mno90   1/1     Running   0          2m
+postgresql-0                       1/1     Running   0          2m
+redis-master-0                     1/1     Running   0          2m
+```
+
+All pods should be `Running` with `1/1` READY.
+
+**Check Services:**
+```bash
+kubectl get svc -n lyra
+```
+
+**Check Ingress:**
+```bash
+kubectl get ingress -n lyra
+```
+
+**Test Application Access:**
+```bash
+# Test HTTPS access
+curl -k https://lyra.yourdomain.com
+
+# Expected: 200 OK with HTML content
+```
+
+### Alternative: Deploy via Helm CLI
+
+For advanced users, you can deploy directly using Helm CLI:
+
+```bash
+# Add Harbor Helm repository
+helm repo add lyra-harbor https://registry.lyra.ovh/chartrepo/lyra
+helm repo update
+
+# Install Lyra
+helm install lyra lyra-harbor/lyra-app \
+  --namespace lyra \
+  --create-namespace \
+  --values custom-values.yaml \
+  --version 1.0.0
+
+# Or install from OCI registry
+helm install lyra \
+  oci://registry.lyra.ovh/lyra/lyra-app \
+  --version 1.0.0 \
+  --namespace lyra \
+  --create-namespace \
+  --values custom-values.yaml
+```
+
+### Post-Deployment Tasks
+
+After successful deployment:
+
+1. **Create Initial Superuser** - See [Initial Deployment Guide](initial-deployment.md#step-6-initial-superuser-setup)
+2. **Configure System Settings** - Set timezone, email, backup settings
+3. **Create First Tenant** - Set up your organization's tenant
+4. **Configure Kubernetes Integration** - Verify cluster connection and storage
+
+### Troubleshooting Deployment Issues
+
+**Pods Not Starting:**
+```bash
+# Check pod events
+kubectl describe pod -n lyra <pod-name>
+
+# Check logs
+kubectl logs -n lyra <pod-name>
+```
+
+**Common issues:**
+- Image pull errors → Verify `harbor-registry-secret` is configured correctly
+- CrashLoopBackOff → Check application logs for configuration errors
+- Pending → Check resource availability and storage provisioning
+
+**Database Connection Issues:**
+```bash
+# Test database connectivity from backend pod
+kubectl exec -it -n lyra <backend-pod> -- bash
+python -c "from app.db.session import engine; engine.connect()"
+```
+
+---
+
+## Step 7: Verify Storage Disks
 
 Before proceeding, verify that worker nodes have the required storage disks for Ceph/Rook.
 
@@ -451,7 +656,7 @@ sdc      8:32   0   500G  0 disk           # Storage disk (optional)
 
 ---
 
-## Step 7: Install Ceph/Rook Storage
+## Step 8: Install Ceph/Rook Storage
 
 Lyra requires persistent storage provided by Ceph/Rook.
 
@@ -577,7 +782,7 @@ Lyra requires persistent storage provided by Ceph/Rook.
 
 ---
 
-## Step 7: Verify Cluster Readiness
+## Step 9: Verify Cluster Readiness
 
 ### Final Verification Checklist
 
