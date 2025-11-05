@@ -393,19 +393,16 @@ After cluster creation, configure Rancher settings required for application depl
 
 **CRITICAL**: Create a project-level registry secret to allow all deployments in the Lyra Platform project to pull images from Harbor.
 
-1. **Navigate to Storage → Project Secrets:**
-   - Go to **Storage** → **Project Secrets**
-   - Click **Create**
+1. **Navigate to your cluster** in Rancher and go to **Storage** → **Project Secrets**
 
-2. **Create Registry Secret:**
+2. **Click Create** and configure the registry secret:
    - **Type:** Select **Registry**
    - **Project:** Select **Lyra Platform** (the project you created earlier)
    - **Name:** `harbor-registry-secret` (must use this exact name)
    - **Registry Domain Name:** `registry.lyra.ovh`
    - **Username:** Your Harbor username (from Prerequisites)
    - **Password:** Your Harbor password/token
-
-3. **Click Create**
+   - Click **Create** to save
 
 **Why project-level secret:**
 - Automatically available to all namespaces created within the Lyra Platform project
