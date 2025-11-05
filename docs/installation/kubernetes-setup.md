@@ -425,7 +425,7 @@ With the cluster configured and Rancher settings in place, you can now deploy Ly
 
 Lyra Platform consists of multiple components that need to be deployed in order:
 
-1. **Infrastructure Services** (PostgreSQL, Redis, Storage)
+1. **Infrastructure Services** (PostgreSQL, Redis, Storage and more)
 2. **Lyra Core Applications** (Backend, Frontend, Scheduler)
 
 All deployments are managed through Rancher's Apps & Marketplace interface using the Helm charts from your Harbor registry.
