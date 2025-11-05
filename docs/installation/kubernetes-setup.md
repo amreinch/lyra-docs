@@ -379,9 +379,9 @@ After cluster creation, configure Rancher settings required for application depl
 
 2. **Click Create** and configure the repository:
    - **Name:** `lyra-charts`
-   - **Target:** Select **Lyra Platform** project
+   - Select **OCI Repository**
    - **Index URL:** `oci://registry.lyra.ovh/lyra-charts`
-   - **Authentication:** (Optional) Add Harbor credentials if required
+   - **Authentication:** Add Harbor credentials
      - **Username:** Your Harbor username
      - **Password:** Your Harbor password/token
    - Click **Create** to save
