@@ -283,6 +283,15 @@ This approach combines all roles on the same nodes to reduce server count.
 
 3. Click on your cluster name to view details
 
+4. **Verify Machines Tab:**
+   - Navigate to **Cluster Management** → **Clusters** → **Your Cluster Name**
+   - Click on the **Machines** tab
+   - **Important:** When every node under the Machines tab shows status **"Running"**, the initial cluster creation has completed successfully
+   - All machines should display:
+     - **State:** Running
+     - **Node:** Node name (e.g., control-node-1, worker-node-1)
+     - **Roles:** Assigned roles (etcd, controlplane, worker)
+
 ### Verify with kubectl
 
 1. **Download kubeconfig** from Rancher:
