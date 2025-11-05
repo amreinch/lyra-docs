@@ -412,29 +412,6 @@ After cluster creation, configure Rancher settings required for application depl
 
 **Important:** The secret must be named exactly `harbor-registry-secret` as Lyra Helm charts reference this name.
 
-### Verify Rancher Configuration
-
-Check that all necessary components are ready:
-
-```bash
-# Check cluster components
-kubectl get pods -n cattle-system
-
-# Check monitoring (if installed)
-kubectl get pods -n cattle-monitoring-system
-
-# Verify the Lyra Platform project exists
-# (Check in Rancher UI: Projects/Namespaces → Lyra Platform should be listed)
-
-# Verify registry secret exists at project level
-# (Check in Rancher UI: Lyra Platform → Resources → Secrets → harbor-registry-secret)
-```
-
-**Expected output:**
-- All pods in `cattle-system` should show `Running` status
-- Lyra Platform project should be visible in Rancher UI
-- `harbor-registry-secret` should exist in project secrets
-
 **Note:** Namespaces within the Lyra Platform project will be created automatically by Helm chart deployments in the next installation steps.
 
 ---
