@@ -390,24 +390,6 @@ After cluster creation, configure Rancher settings required for application depl
 - The repository should appear in the list with status "Active"
 - This enables deployment of Lyra Helm charts directly through Rancher UI
 
-### Enable Monitoring (Optional but Recommended)
-
-1. **Navigate to Cluster Tools:**
-   - Click your cluster name in Rancher
-   - Go to **Cluster Tools** in the left sidebar
-
-2. **Install Monitoring:**
-   - Find **Monitoring** in the list
-   - Click **Install**
-   - Keep default settings or customize as needed
-   - Click **Install** and wait for completion
-
-**Benefits:**
-- Resource usage metrics (CPU, memory, disk)
-- Pod and node monitoring
-- Grafana dashboards for visualization
-- Prometheus for metrics collection
-
 ### Configure Container Registry Access
 
 **CRITICAL**: Create a project-level registry secret to allow all deployments in the Lyra Platform project to pull images from Harbor.
