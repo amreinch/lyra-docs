@@ -339,6 +339,38 @@ This approach combines all roles on the same nodes to reduce server count.
 
 After cluster creation, configure Rancher settings required for application deployments.
 
+### Create Lyra Project in Rancher
+
+**IMPORTANT**: Rancher Projects provide organizational structure and resource isolation for related applications. Create a dedicated project for the Lyra Platform and its components.
+
+1. **Navigate to Projects/Namespaces:**
+   - Click your cluster name in Rancher
+   - Go to **Projects/Namespaces** in the left sidebar
+
+2. **Create New Project:**
+   - Click **Create Project** button
+   - **Project Name:** `Lyra Platform`
+   - **Description:** `Lyra application and infrastructure components`
+   - **Resource Quotas:** (Optional) Set limits for the project
+   - **Container Default Resource Limit:** (Optional) Set default limits
+
+3. **Click Create**
+
+**What will be deployed in this project:**
+- Lyra Backend application
+- Lyra Frontend application
+- Lyra Scheduler service
+- PostgreSQL database
+- Redis cache
+- Supporting infrastructure services
+
+**Benefits of using a dedicated project:**
+- Logical grouping of all Lyra-related deployments
+- Resource quota management for the entire platform
+- Simplified RBAC (Role-Based Access Control)
+- Clear separation from other applications
+- Easier monitoring and troubleshooting
+
 ### Enable Monitoring (Optional but Recommended)
 
 1. **Navigate to Cluster Tools:**
@@ -357,9 +389,24 @@ After cluster creation, configure Rancher settings required for application depl
 - Grafana dashboards for visualization
 - Prometheus for metrics collection
 
+### Create Lyra Namespace
+
+Within the Lyra Platform project, create a namespace for the application deployment:
+
+1. **Navigate to Projects/Namespaces:**
+   - Click your cluster name
+   - Go to **Projects/Namespaces**
+
+2. **Create Namespace:**
+   - Ensure you're viewing the **Lyra Platform** project
+   - Click **Create Namespace**
+   - **Name:** `lyra`
+   - **Project:** Lyra Platform (should be pre-selected)
+   - Click **Create**
+
 ### Configure Container Registry Access
 
-To allow Kubernetes to pull images from your Harbor registry, create a registry secret:
+To allow Kubernetes to pull images from your Harbor registry, create a registry secret in the Lyra namespace:
 
 1. **Navigate to Secrets:**
    - Click your cluster name
@@ -369,31 +416,37 @@ To allow Kubernetes to pull images from your Harbor registry, create a registry 
 2. **Create Registry Secret:**
    - **Type:** Registry
    - **Name:** `harbor-registry-secret`
-   - **Namespace:** `default` (or create namespace for your application)
+   - **Namespace:** `lyra` (select the namespace you just created)
    - **Registry Domain Name:** `registry.lyra.ovh`
-   - **Username:** Your Harbor username
-   - **Password:** Your Harbor password
+   - **Username:** Your Harbor username (from Prerequisites)
+   - **Password:** Your Harbor password/token
 
 3. **Click Save**
 
-**Note:** You can create this secret in multiple namespaces as needed for different applications.
+**Important:** This secret will be used by all Lyra component deployments (backend, frontend, scheduler) to pull container images from the Harbor registry.
 
 ### Verify Rancher Configuration
 
 Check that all necessary components are ready:
 
 ```bash
+# Verify Lyra namespace exists
+kubectl get namespace lyra
+
 # Check cluster components
 kubectl get pods -n cattle-system
 
 # Check monitoring (if installed)
 kubectl get pods -n cattle-monitoring-system
 
-# Verify registry secret
-kubectl get secret harbor-registry-secret -n default
+# Verify registry secret in Lyra namespace
+kubectl get secret harbor-registry-secret -n lyra
 ```
 
-All pods should show `Running` status.
+**Expected output:**
+- `lyra` namespace should be `Active`
+- All pods in `cattle-system` should show `Running` status
+- Registry secret should exist in `lyra` namespace
 
 ---
 
