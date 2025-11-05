@@ -52,8 +52,6 @@ This guide uses bare-metal or VM deployments with a custom cluster configuration
 
 ## Step 3: Configure Node Roles
 
-### Understanding Kubernetes Node Roles
-
 Before configuring nodes, it's important to understand the three roles in Kubernetes:
 
 #### etcd
