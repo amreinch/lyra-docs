@@ -54,41 +54,53 @@ This guide uses bare-metal or VM deployments with a custom cluster configuration
 
 Before configuring nodes, it's important to understand the three roles in Kubernetes:
 
-#### etcd
-**Purpose**: Distributed key-value database that stores all cluster data and state.
+---
 
-**Responsibilities**:
+### etcd Role
+
+**Purpose**
+Distributed key-value database that stores all cluster data and state.
+
+**Responsibilities**
 - Stores cluster configuration and state
 - Maintains consistency across the cluster
 - Provides cluster-wide data persistence
 
-**Requirements**:
+**Requirements**
 - **Must be odd number** of nodes (3, 5, or 7) for quorum and fault tolerance
 - Low latency storage (SSD recommended)
 - Reliable network connectivity between etcd nodes
 
-#### Control Plane
-**Purpose**: Manages the Kubernetes cluster and makes decisions about workload scheduling.
+---
 
-**Responsibilities**:
+### Control Plane Role
+
+**Purpose**
+Manages the Kubernetes cluster and makes decisions about workload scheduling.
+
+**Responsibilities**
 - API server (kubectl commands go here)
 - Scheduler (decides which node runs which pod)
 - Controller manager (maintains desired cluster state)
 - Cloud controller manager (cloud provider integration)
 
-**Requirements**:
+**Requirements**
 - Adequate CPU and memory for cluster management
 - Should be highly available (3 nodes recommended for production)
 
-#### Worker
-**Purpose**: Runs application workloads and services.
+---
 
-**Responsibilities**:
+### Worker Role
+
+**Purpose**
+Runs application workloads and services.
+
+**Responsibilities**
 - Runs containerized applications (pods)
 - Provides compute resources for workloads
 - Executes storage operations (when Ceph/Rook is deployed)
 
-**Requirements**:
+**Requirements**
 - Storage disks for Ceph/Rook (e.g., `/dev/sdb`, `/dev/sdc`)
 - Adequate CPU and memory for application workloads
 - Can be scaled horizontally (add more workers as needed)
