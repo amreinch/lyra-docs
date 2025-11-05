@@ -389,64 +389,59 @@ After cluster creation, configure Rancher settings required for application depl
 - Grafana dashboards for visualization
 - Prometheus for metrics collection
 
-### Create Lyra Namespace
-
-Within the Lyra Platform project, create a namespace for the application deployment:
-
-1. **Navigate to Projects/Namespaces:**
-   - Click your cluster name
-   - Go to **Projects/Namespaces**
-
-2. **Create Namespace:**
-   - Ensure you're viewing the **Lyra Platform** project
-   - Click **Create Namespace**
-   - **Name:** `lyra`
-   - **Project:** Lyra Platform (should be pre-selected)
-   - Click **Create**
-
 ### Configure Container Registry Access
 
-To allow Kubernetes to pull images from your Harbor registry, create a registry secret in the Lyra namespace:
+**CRITICAL**: Create a project-level registry secret to allow all deployments in the Lyra Platform project to pull images from Harbor.
 
-1. **Navigate to Secrets:**
-   - Click your cluster name
-   - Go to **Storage** → **Secrets**
+1. **Navigate to the Lyra Platform Project:**
+   - Click your cluster name in Rancher
+   - Go to **Projects/Namespaces**
+   - Click on **Lyra Platform** project
+
+2. **Create Project Secret:**
+   - In the project view, go to **Resources** → **Secrets**
    - Click **Create**
-
-2. **Create Registry Secret:**
-   - **Type:** Registry
-   - **Name:** `harbor-registry-secret`
-   - **Namespace:** `lyra` (select the namespace you just created)
+   - **Type:** Select **Registry**
+   - **Secret Name:** `harbor-registry-secret` (must use this exact name)
+   - **Namespace:** Leave empty or select "All Namespaces" (this makes it available project-wide)
    - **Registry Domain Name:** `registry.lyra.ovh`
    - **Username:** Your Harbor username (from Prerequisites)
    - **Password:** Your Harbor password/token
 
 3. **Click Save**
 
-**Important:** This secret will be used by all Lyra component deployments (backend, frontend, scheduler) to pull container images from the Harbor registry.
+**Why project-level secret:**
+- Automatically available to all namespaces created within the Lyra Platform project
+- Deployments will automatically create their namespaces and inherit this secret
+- No need to manually create the secret in each namespace
+- Simplifies Helm chart deployments
+
+**Important:** The secret must be named exactly `harbor-registry-secret` as Lyra Helm charts reference this name.
 
 ### Verify Rancher Configuration
 
 Check that all necessary components are ready:
 
 ```bash
-# Verify Lyra namespace exists
-kubectl get namespace lyra
-
 # Check cluster components
 kubectl get pods -n cattle-system
 
 # Check monitoring (if installed)
 kubectl get pods -n cattle-monitoring-system
 
-# Verify registry secret in Lyra namespace
-kubectl get secret harbor-registry-secret -n lyra
+# Verify the Lyra Platform project exists
+# (Check in Rancher UI: Projects/Namespaces → Lyra Platform should be listed)
+
+# Verify registry secret exists at project level
+# (Check in Rancher UI: Lyra Platform → Resources → Secrets → harbor-registry-secret)
 ```
 
 **Expected output:**
-- `lyra` namespace should be `Active`
 - All pods in `cattle-system` should show `Running` status
-- Registry secret should exist in `lyra` namespace
+- Lyra Platform project should be visible in Rancher UI
+- `harbor-registry-secret` should exist in project secrets
+
+**Note:** Namespaces within the Lyra Platform project will be created automatically by Helm chart deployments in the next installation steps.
 
 ---
 
