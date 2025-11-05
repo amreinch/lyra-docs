@@ -337,7 +337,7 @@ If you don't meet these prerequisites:
 
 ✅ **Prerequisites met?**
 
-Proceed to: **[Initial Deployment](initial-deployment.md)**
+Proceed to: **[Kubernetes Setup](kubernetes-setup.md)**
 
 ---
 

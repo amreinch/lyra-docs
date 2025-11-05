@@ -84,6 +84,7 @@ nav:
   - Installation & Updates:
     - installation/index.md
     - Prerequisites: installation/prerequisites.md
+    - Kubernetes Setup: installation/kubernetes-setup.md
     - Initial Deployment: installation/initial-deployment.md
     - Updates & Maintenance: installation/updates.md
 
