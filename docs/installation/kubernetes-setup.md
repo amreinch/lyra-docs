@@ -30,9 +30,7 @@ After completing the prerequisites, you'll use Rancher to:
 
 ## Step 2: Create Kubernetes Cluster
 
-### Option A: Using Existing Nodes (Custom Cluster)
-
-This is the recommended approach for bare-metal or VM deployments.
+This guide uses bare-metal or VM deployments with a custom cluster configuration.
 
 1. **Click "Create" button** in Rancher dashboard
 
@@ -42,34 +40,37 @@ This is the recommended approach for bare-metal or VM deployments.
 
    **Cluster Name:** `lyra-production` (or your preferred name)
 
-   **Kubernetes Version:** Select 1.27+ (recommended: latest stable)
+   **Kubernetes Version:** v1.33.5+rke2r1 (recommended)
 
-   **Network Provider:**
-   - **Canal** (recommended) - Provides both networking and network policy
-   - Alternative: Calico, Flannel
+   **Network Provider:** Calico - Provides both networking and network policy
 
    **Cloud Provider:** None (for bare-metal/VMs)
 
 4. **Click "Next"**
 
-### Option B: Using Cloud Provider
-
-If using a cloud provider (AWS, Azure, GCP), select the appropriate provider and follow the cloud-specific configuration steps.
-
 ---
 
 ## Step 3: Configure Node Roles
 
-Rancher will display a registration command for adding nodes. You'll generate different commands for control plane and worker nodes.
+Rancher will display a registration command for adding nodes. Choose one of the deployment strategies below based on your infrastructure.
 
-### Configure Control Plane Nodes
+### Deployment Strategy A: Dedicated Roles (Recommended for Production)
 
-1. **Check the boxes:**
+This approach separates control plane and worker responsibilities for better isolation and performance.
+
+**Node Configuration:**
+- **Control Plane Nodes**: etcd + Control Plane only (no Worker role)
+- **Worker Nodes**: Worker role only
+- **Total Nodes**: Minimum 4 nodes (1 control plane + 3 workers) or 8+ nodes for HA (3 control plane + 5 workers)
+
+#### Configure Control Plane Nodes
+
+1. **In Rancher UI, check the boxes:**
    - ✅ etcd
    - ✅ Control Plane
-   - ⬜ Worker (leave unchecked for dedicated control plane)
+   - ⬜ Worker (leave unchecked)
 
-2. **Copy the registration command** shown in the Rancher UI
+2. **Copy the registration command**
 
 3. **SSH to your control plane server(s)** and run the command:
    ```bash
@@ -84,15 +85,13 @@ Rancher will display a registration command for adding nodes. You'll generate di
      --etcd --controlplane
    ```
 
-4. **Repeat for all control plane nodes:**
-   - Minimum: 1 node (development)
-   - Production: 3 nodes (high availability)
+4. **Repeat for all control plane nodes** (1 for dev, 3 for HA production)
 
 5. **Wait for nodes to appear** in Rancher UI with status "Active"
 
-### Configure Worker Nodes
+#### Configure Worker Nodes
 
-1. **Back in Rancher UI, check the boxes:**
+1. **In Rancher UI, check the boxes:**
    - ⬜ etcd (leave unchecked)
    - ⬜ Control Plane (leave unchecked)
    - ✅ Worker
@@ -112,11 +111,69 @@ Rancher will display a registration command for adding nodes. You'll generate di
      --worker
    ```
 
-4. **Repeat for all worker nodes:**
-   - Minimum: 3 nodes (development)
-   - Production: 5+ nodes
+4. **Repeat for all worker nodes** (3+ nodes minimum)
 
 5. **Wait for all nodes to become "Active"**
+
+---
+
+### Deployment Strategy B: Combined Roles (For Smaller Deployments)
+
+This approach combines all roles on the same nodes to reduce server count. Use odd number of nodes (3, 5, 7) for etcd quorum.
+
+**Node Configuration:**
+- **All Nodes**: etcd + Control Plane + Worker (all three roles)
+- **Total Nodes**: Minimum 3 nodes (odd number required for etcd quorum)
+
+**Benefits:**
+- Fewer servers required (3 nodes instead of 4-8)
+- Lower infrastructure costs
+- Simpler for development/testing or small production deployments
+
+**Considerations:**
+- Control plane and application workloads share resources
+- Less isolation than dedicated roles
+- Still provides high availability with 3+ nodes
+
+#### Configure Combined Role Nodes
+
+1. **In Rancher UI, check ALL boxes:**
+   - ✅ etcd
+   - ✅ Control Plane
+   - ✅ Worker
+
+2. **Copy the registration command**
+
+3. **SSH to each server** and run the command:
+   ```bash
+   # Example command (yours will be different):
+   sudo docker run -d --privileged --restart=unless-stopped \
+     --net=host -v /etc/kubernetes:/etc/kubernetes \
+     -v /var/run:/var/run \
+     rancher/rancher-agent:v2.x.x \
+     --server https://rancher-server-url \
+     --token xxxxx \
+     --ca-checksum xxxxx \
+     --etcd --controlplane --worker
+   ```
+
+4. **Repeat for all nodes** (must be odd number: 3, 5, or 7 nodes)
+
+5. **Wait for all nodes to become "Active"**
+
+**Important**: Each node must have storage disks (e.g., `/dev/sdb`) for Ceph/Rook since they act as workers.
+
+---
+
+### Which Strategy to Choose?
+
+| Scenario | Recommended Strategy | Node Count |
+|----------|---------------------|------------|
+| **Development/Testing** | Combined Roles | 3 nodes (all roles) |
+| **Small Production** | Combined Roles | 3-5 nodes (all roles) |
+| **Medium Production** | Dedicated Roles | 4-6 nodes (1 control + 3-5 workers) |
+| **Large Production (HA)** | Dedicated Roles | 8+ nodes (3 control + 5+ workers) |
+| **Enterprise/High-Traffic** | Dedicated Roles | 10+ nodes (3 control + 7+ workers) |
 
 ---
 
