@@ -70,16 +70,22 @@ This approach separates control plane and worker responsibilities for better iso
    - ✅ Control Plane
    - ⬜ Worker (leave unchecked)
 
-2. **Copy the registration command**
+2. **Copy the registration command** shown in the Rancher UI
 
 3. **SSH to your control plane server(s)** and run the command:
    ```bash
    # Example command (yours will be different):
-   sudo docker run -d --privileged --restart=unless-stopped \
-     --net=host -v /etc/kubernetes:/etc/kubernetes \
-     -v /var/run:/var/run \
-     rancher/rancher-agent:v2.x.x \
-     --server https://rancher-server-url \
+   curl -fL https://rancher-server-ip/system-agent-install.sh | sudo sh -s - \
+     --server https://rancher-server-ip \
+     --label 'cattle.io/os=linux' \
+     --token xxxxx \
+     --ca-checksum xxxxx \
+     --etcd --controlplane
+
+   # If using self-signed certificate, add --insecure flag:
+   curl --insecure -fL https://rancher-server-ip/system-agent-install.sh | sudo sh -s - \
+     --server https://rancher-server-ip \
+     --label 'cattle.io/os=linux' \
      --token xxxxx \
      --ca-checksum xxxxx \
      --etcd --controlplane
@@ -101,11 +107,17 @@ This approach separates control plane and worker responsibilities for better iso
 3. **SSH to your worker server(s)** and run the command:
    ```bash
    # Example command (yours will be different):
-   sudo docker run -d --privileged --restart=unless-stopped \
-     --net=host -v /etc/kubernetes:/etc/kubernetes \
-     -v /var/run:/var/run \
-     rancher/rancher-agent:v2.x.x \
-     --server https://rancher-server-url \
+   curl -fL https://rancher-server-ip/system-agent-install.sh | sudo sh -s - \
+     --server https://rancher-server-ip \
+     --label 'cattle.io/os=linux' \
+     --token xxxxx \
+     --ca-checksum xxxxx \
+     --worker
+
+   # If using self-signed certificate, add --insecure flag:
+   curl --insecure -fL https://rancher-server-ip/system-agent-install.sh | sudo sh -s - \
+     --server https://rancher-server-ip \
+     --label 'cattle.io/os=linux' \
      --token xxxxx \
      --ca-checksum xxxxx \
      --worker
@@ -147,11 +159,17 @@ This approach combines all roles on the same nodes to reduce server count. Use o
 3. **SSH to each server** and run the command:
    ```bash
    # Example command (yours will be different):
-   sudo docker run -d --privileged --restart=unless-stopped \
-     --net=host -v /etc/kubernetes:/etc/kubernetes \
-     -v /var/run:/var/run \
-     rancher/rancher-agent:v2.x.x \
-     --server https://rancher-server-url \
+   curl -fL https://rancher-server-ip/system-agent-install.sh | sudo sh -s - \
+     --server https://rancher-server-ip \
+     --label 'cattle.io/os=linux' \
+     --token xxxxx \
+     --ca-checksum xxxxx \
+     --etcd --controlplane --worker
+
+   # If using self-signed certificate, add --insecure flag:
+   curl --insecure -fL https://rancher-server-ip/system-agent-install.sh | sudo sh -s - \
+     --server https://rancher-server-ip \
+     --label 'cattle.io/os=linux' \
      --token xxxxx \
      --ca-checksum xxxxx \
      --etcd --controlplane --worker
