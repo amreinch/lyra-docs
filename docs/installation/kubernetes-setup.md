@@ -440,11 +440,12 @@ All deployments are managed through Rancher's Apps & Marketplace interface using
    - Browse available charts (lyra-app, postgresql, redis, etc.)
    - Click on the chart you want to install
    - Click **Install**
+   - **Chart Version:** Select the desired version (e.g., `1.0.0`)
 
 3. **Configure Deployment:**
-   - **Chart Version:** Select the desired version (e.g., `1.0.0`)
+   - **Namespace:** The Helm charts define the namespace automatically
+   - **Names:** Names are also defined by the Helm chart
    - **Project:** Select **Lyra Platform** from the dropdown (the project you created earlier)
-   - **Namespace:** The Helm charts define the namespace automatically, and names are automatically defined in the following deployment steps
 
 4. **Configure Helm Values:**
 
