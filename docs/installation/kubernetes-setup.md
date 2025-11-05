@@ -452,11 +452,15 @@ All deployments are managed through Rancher's Apps & Marketplace interface using
 
 ---
 
-## Step 7: Verify Storage Disks
+## Step 7: Install Ceph/Rook Storage
+
+Lyra requires persistent storage provided by Ceph/Rook.
+
+### Prerequisites: Verify Storage Disks
 
 Before proceeding, verify that worker nodes have the required storage disks for Ceph/Rook.
 
-### Check Disks on Worker Nodes
+**Check Disks on Worker Nodes:**
 
 SSH to each worker node and verify disk configuration:
 
@@ -483,12 +487,6 @@ sdc      8:32   0   500G  0 disk           # Storage disk (optional)
 1. Provision additional disks on your VMs/servers
 2. Ensure disks are attached but NOT formatted or partitioned
 3. Restart the verification process
-
----
-
-## Step 8: Install Ceph/Rook Storage
-
-Lyra requires persistent storage provided by Ceph/Rook.
 
 ### Install Rook Operator via Rancher
 
@@ -612,7 +610,7 @@ Lyra requires persistent storage provided by Ceph/Rook.
 
 ---
 
-## Step 9: Verify Cluster Readiness
+## Step 8: Verify Cluster Readiness
 
 ### Final Verification Checklist
 
