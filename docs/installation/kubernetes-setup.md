@@ -335,7 +335,69 @@ This approach combines all roles on the same nodes to reduce server count.
 
 ---
 
-## Step 5: Verify Storage Disks
+## Step 5: Configure Rancher for Deployments
+
+After cluster creation, configure Rancher settings required for application deployments.
+
+### Enable Monitoring (Optional but Recommended)
+
+1. **Navigate to Cluster Tools:**
+   - Click your cluster name in Rancher
+   - Go to **Cluster Tools** in the left sidebar
+
+2. **Install Monitoring:**
+   - Find **Monitoring** in the list
+   - Click **Install**
+   - Keep default settings or customize as needed
+   - Click **Install** and wait for completion
+
+**Benefits:**
+- Resource usage metrics (CPU, memory, disk)
+- Pod and node monitoring
+- Grafana dashboards for visualization
+- Prometheus for metrics collection
+
+### Configure Container Registry Access
+
+To allow Kubernetes to pull images from your Harbor registry, create a registry secret:
+
+1. **Navigate to Secrets:**
+   - Click your cluster name
+   - Go to **Storage** → **Secrets**
+   - Click **Create**
+
+2. **Create Registry Secret:**
+   - **Type:** Registry
+   - **Name:** `harbor-registry-secret`
+   - **Namespace:** `default` (or create namespace for your application)
+   - **Registry Domain Name:** `registry.lyra.ovh`
+   - **Username:** Your Harbor username
+   - **Password:** Your Harbor password
+
+3. **Click Save**
+
+**Note:** You can create this secret in multiple namespaces as needed for different applications.
+
+### Verify Rancher Configuration
+
+Check that all necessary components are ready:
+
+```bash
+# Check cluster components
+kubectl get pods -n cattle-system
+
+# Check monitoring (if installed)
+kubectl get pods -n cattle-monitoring-system
+
+# Verify registry secret
+kubectl get secret harbor-registry-secret -n default
+```
+
+All pods should show `Running` status.
+
+---
+
+## Step 6: Verify Storage Disks
 
 Before proceeding, verify that worker nodes have the required storage disks for Ceph/Rook.
 
@@ -369,7 +431,7 @@ sdc      8:32   0   500G  0 disk           # Storage disk (optional)
 
 ---
 
-## Step 6: Install Ceph/Rook Storage
+## Step 7: Install Ceph/Rook Storage
 
 Lyra requires persistent storage provided by Ceph/Rook.
 
