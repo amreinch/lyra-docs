@@ -833,7 +833,7 @@ The persistent Redis deployment provides high availability with Redis Sentinel f
 Install the **redis** chart following the deployment process described in Step 6.
 
 **Chart Configuration:**
-- **Name:** `lyra` (fixed release name for consistent service naming)
+- **Name:** `redis` (fixed release name for consistent service naming)
 - **Namespace:** `databases`
 - **Chart Version:** Latest stable version
 - **Project:** `Lyra Platform`
@@ -859,10 +859,10 @@ kubectl get pods -n databases -l app=redis-ha
 
 **Expected output:**
 ```
-NAME                      READY   STATUS    RESTARTS   AGE
-lyra-redis-ha-server-0    2/2     Running   0          2m
-lyra-redis-ha-server-1    2/2     Running   0          2m
-lyra-redis-ha-server-2    2/2     Running   0          2m
+NAME                       READY   STATUS    RESTARTS   AGE
+redis-redis-ha-server-0    2/2     Running   0          2m
+redis-redis-ha-server-1    2/2     Running   0          2m
+redis-redis-ha-server-2    2/2     Running   0          2m
 ```
 
 **Pod Components:**
@@ -877,16 +877,16 @@ kubectl get svc -n databases -l app=redis-ha
 
 **Expected output:**
 ```
-NAME                        TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)              AGE
-lyra-redis-ha               ClusterIP   None            <none>        6379/TCP,26379/TCP   2m
-lyra-redis-ha-announce-0    ClusterIP   10.43.xxx.xxx   <none>        6379/TCP,26379/TCP   2m
-lyra-redis-ha-announce-1    ClusterIP   10.43.xxx.xxx   <none>        6379/TCP,26379/TCP   2m
-lyra-redis-ha-announce-2    ClusterIP   10.43.xxx.xxx   <none>        6379/TCP,26379/TCP   2m
+NAME                         TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)              AGE
+redis-redis-ha               ClusterIP   None            <none>        6379/TCP,26379/TCP   2m
+redis-redis-ha-announce-0    ClusterIP   10.43.xxx.xxx   <none>        6379/TCP,26379/TCP   2m
+redis-redis-ha-announce-1    ClusterIP   10.43.xxx.xxx   <none>        6379/TCP,26379/TCP   2m
+redis-redis-ha-announce-2    ClusterIP   10.43.xxx.xxx   <none>        6379/TCP,26379/TCP   2m
 ```
 
 **Service Endpoints:**
-- `lyra-redis-ha` - Headless service for discovery
-- `lyra-redis-ha-announce-*` - Individual pod services
+- `redis-redis-ha` - Headless service for discovery
+- `redis-redis-ha-announce-*` - Individual pod services
 - Port 6379: Redis data port
 - Port 26379: Sentinel port
 
@@ -952,11 +952,11 @@ kubectl get pods -n databases -l 'app in (redis-ha,redis-ephemeral)'
 
 **Expected output:**
 ```
-NAME                               READY   STATUS    RESTARTS   AGE
-lyra-redis-ha-server-0             2/2     Running   0          3m
-lyra-redis-ha-server-1             2/2     Running   0          3m
-lyra-redis-ha-server-2             2/2     Running   0          3m
-redis-ephemeral-xxxxxxxxxx-xxxxx   1/1     Running   0          2m
+NAME                                READY   STATUS    RESTARTS   AGE
+redis-redis-ha-server-0             2/2     Running   0          3m
+redis-redis-ha-server-1             2/2     Running   0          3m
+redis-redis-ha-server-2             2/2     Running   0          3m
+redis-ephemeral-xxxxxxxxxx-xxxxx    1/1     Running   0          2m
 ```
 
 ### Redis Connection Information
@@ -965,7 +965,7 @@ redis-ephemeral-xxxxxxxxxx-xxxxx   1/1     Running   0          2m
 
 **Redis HA (Persistent):**
 - **Connection**: Sentinel-aware connection required
-- **Sentinel Service**: `lyra-redis-ha.databases.svc.cluster.local:26379`
+- **Sentinel Service**: `redis-redis-ha.databases.svc.cluster.local:26379`
 - **Master Name**: `redis-master`
 - **Use Case**: Token blacklist, persistent caches
 
