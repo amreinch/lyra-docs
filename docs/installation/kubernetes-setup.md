@@ -806,7 +806,183 @@ kubectl get secret lyra-postgres-app -n databases -o jsonpath='{.data.uri}' | ba
 
 ---
 
-## Step 9: Verify Cluster Readiness
+## Step 9: Deploy Redis Cache
+
+Lyra Platform requires Redis for caching and session management. The deployment consists of two Redis instances with different purposes.
+
+### Redis Deployment Architecture
+
+**Dual Redis Pattern**: Lyra uses two separate Redis deployments:
+1. **redis (HA)**: Persistent Redis with Sentinel for critical data (token blacklist, important caches)
+2. **redis-ephemeral**: Non-persistent Redis with LRU eviction for temporary sessions
+
+**Namespace**: Both Redis instances are deployed in the `databases` namespace.
+
+### Deploy Redis HA (Persistent)
+
+The persistent Redis deployment provides high availability with Redis Sentinel for automatic failover.
+
+**Purpose of redis (HA):**
+- Stores critical data that must persist across restarts
+- Token blacklist for authentication security
+- Important application caches
+- High availability with Redis Sentinel
+- Automatic failover and replication
+- Persistent storage using Ceph/Rook
+
+Install the **redis** chart following the deployment process described in Step 6.
+
+**Chart Configuration:**
+- **Name:** `lyra` (fixed release name for consistent service naming)
+- **Namespace:** `databases`
+- **Chart Version:** Latest stable version
+- **Project:** `Lyra Platform`
+
+**Important Configuration Values:**
+- **Replicas**: 3 instances (1 master + 2 replicas) for high availability
+- **Storage Size**: 5Gi persistent volume per instance
+- **Storage Class**: `rook-ceph-block` (uses Ceph storage from Step 7)
+- **Max Memory**: 512MB per instance
+- **Eviction Policy**: `noeviction` (critical data must not be evicted)
+- **Persistence**: RDB snapshots + AOF (append-only file)
+- **Sentinel Quorum**: 2 (minimum sentinels for failover decision)
+
+**Monitor Redis HA deployment** (takes 2-3 minutes):
+```bash
+kubectl get pods -n databases -w
+```
+
+**Verify all Redis HA pods are running:**
+```bash
+kubectl get pods -n databases -l app=redis-ha
+```
+
+**Expected output:**
+```
+NAME                      READY   STATUS    RESTARTS   AGE
+lyra-redis-ha-server-0    2/2     Running   0          2m
+lyra-redis-ha-server-1    2/2     Running   0          2m
+lyra-redis-ha-server-2    2/2     Running   0          2m
+```
+
+**Pod Components:**
+- Each pod runs 2 containers: Redis server + Sentinel
+- 3 replicas provide high availability with automatic failover
+- Sentinel monitors Redis instances and manages failover
+
+**Verify Redis HA services:**
+```bash
+kubectl get svc -n databases -l app=redis-ha
+```
+
+**Expected output:**
+```
+NAME                        TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)              AGE
+lyra-redis-ha               ClusterIP   None            <none>        6379/TCP,26379/TCP   2m
+lyra-redis-ha-announce-0    ClusterIP   10.43.xxx.xxx   <none>        6379/TCP,26379/TCP   2m
+lyra-redis-ha-announce-1    ClusterIP   10.43.xxx.xxx   <none>        6379/TCP,26379/TCP   2m
+lyra-redis-ha-announce-2    ClusterIP   10.43.xxx.xxx   <none>        6379/TCP,26379/TCP   2m
+```
+
+**Service Endpoints:**
+- `lyra-redis-ha` - Headless service for discovery
+- `lyra-redis-ha-announce-*` - Individual pod services
+- Port 6379: Redis data port
+- Port 26379: Sentinel port
+
+### Deploy Redis Ephemeral (Sessions)
+
+The ephemeral Redis deployment provides fast, memory-only storage for temporary data like user sessions.
+
+**Purpose of redis-ephemeral:**
+- Temporary session storage
+- Short-lived caches
+- LRU (Least Recently Used) eviction when memory is full
+- No persistence - data is lost on restart (by design)
+- Single instance (HA not required for ephemeral data)
+- Lower resource usage
+
+Install the **redis-ephemeral** chart following the deployment process described in Step 6.
+
+**Chart Configuration:**
+- **Name:** `redis-ephemeral`
+- **Namespace:** `databases`
+- **Chart Version:** Latest stable version
+- **Project:** `Lyra Platform`
+
+**Important Configuration Values:**
+- **Replicas**: 1 instance (HA not needed for ephemeral data)
+- **Storage**: None (memory-only, no persistence)
+- **Max Memory**: 256MB
+- **Eviction Policy**: `allkeys-lru` (evict least recently used keys when full)
+- **Persistence**: Disabled (no RDB snapshots, no AOF)
+
+**Verify Redis Ephemeral is running:**
+```bash
+kubectl get pods -n databases -l app=redis-ephemeral
+```
+
+**Expected output:**
+```
+NAME                               READY   STATUS    RESTARTS   AGE
+redis-ephemeral-xxxxxxxxxx-xxxxx   1/1     Running   0          1m
+```
+
+**Verify Redis Ephemeral service:**
+```bash
+kubectl get svc -n databases redis-ephemeral
+```
+
+**Expected output:**
+```
+NAME              TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
+redis-ephemeral   ClusterIP   10.43.xxx.xxx   <none>        6379/TCP   1m
+```
+
+**Service Endpoint:**
+- `redis-ephemeral` - ClusterIP service for ephemeral Redis access
+- Port 6379: Redis data port
+
+### Verify Complete Redis Deployment
+
+**Check all Redis pods:**
+```bash
+kubectl get pods -n databases -l 'app in (redis-ha,redis-ephemeral)'
+```
+
+**Expected output:**
+```
+NAME                               READY   STATUS    RESTARTS   AGE
+lyra-redis-ha-server-0             2/2     Running   0          3m
+lyra-redis-ha-server-1             2/2     Running   0          3m
+lyra-redis-ha-server-2             2/2     Running   0          3m
+redis-ephemeral-xxxxxxxxxx-xxxxx   1/1     Running   0          2m
+```
+
+### Redis Connection Information
+
+**For Lyra Application Configuration:**
+
+**Redis HA (Persistent):**
+- **Connection**: Sentinel-aware connection required
+- **Sentinel Service**: `lyra-redis-ha.databases.svc.cluster.local:26379`
+- **Master Name**: `redis-master`
+- **Use Case**: Token blacklist, persistent caches
+
+**Redis Ephemeral:**
+- **Connection**: Direct Redis connection
+- **Service**: `redis-ephemeral.databases.svc.cluster.local:6379`
+- **Use Case**: User sessions, temporary data
+
+**Important:**
+- No authentication is configured by default (protected by Kubernetes network policies)
+- Applications connect via ClusterIP services (internal cluster access only)
+- Redis HA requires Sentinel-aware client libraries
+- Redis Ephemeral uses standard Redis protocol
+
+---
+
+## Step 10: Verify Cluster Readiness
 
 ### Final Verification Checklist
 
