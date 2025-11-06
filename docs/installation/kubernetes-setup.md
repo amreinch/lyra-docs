@@ -493,8 +493,8 @@ sdc      8:32   0   500G  0 disk           # Storage disk (optional)
 Install the **rook-ceph-lyra-operator** chart following the deployment process described above in Step 6.
 
 **Chart Configuration:**
-- **Name:** `rook-ceph`
-- **Namespace:** `rook-ceph` (create new)
+- **Name:** `rook-ceph-operator`
+- **Namespace:** `rook-ceph`
 - **Chart Version:** Latest stable version
 
 **Verify Rook Operator is running:**
