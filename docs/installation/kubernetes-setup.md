@@ -1009,7 +1009,7 @@ Container Storage Interface (CSI) drivers enable Kubernetes to mount external st
 
 The SMB CSI driver enables mounting Windows file shares and Samba servers.
 
-**Chart:** `csi-smb-lyra` (version 1.0.7)
+**Chart:** `csi-smb-lyra`
 
 **Chart Configuration:**
 - **Name:** `csi-smb-driver`
@@ -1056,7 +1056,7 @@ smb.csi.k8s.io    false            false            false             <unset>   
 
 The NFS CSI driver enables mounting NFS (Network File System) shares.
 
-**Chart:** `csi-nfs-lyra` (version 1.0.6)
+**Chart:** `csi-nfs-lyra`
 
 **Chart Configuration:**
 - **Name:** `csi-nfs-driver`
@@ -1103,7 +1103,7 @@ nfs.csi.k8s.io    false            false            false             <unset>   
 
 The S3 CSI driver enables mounting S3-compatible object storage (AWS S3, MinIO, etc.) as file systems.
 
-**Chart:** `csi-s3-lyra` (version 1.0.7)
+**Chart:** `csi-s3-lyra`
 
 **Chart Configuration:**
 - **Name:** `csi-s3-driver`
