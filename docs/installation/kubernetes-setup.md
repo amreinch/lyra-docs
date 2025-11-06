@@ -540,26 +540,102 @@ Install the **rook-ceph-lyra-cluster** chart following the deployment process de
 kubectl get pods -n rook-ceph -w
 ```
 
-**Expected pods after deployment:**
-```
-NAME                                  READY   STATUS    RESTARTS   AGE
-rook-ceph-operator-xxxxx              1/1     Running   0          5m
-rook-discover-xxxxx                   1/1     Running   0          5m
-rook-discover-yyyyy                   1/1     Running   0          5m
-rook-discover-zzzzz                   1/1     Running   0          5m
-rook-ceph-mon-a-xxxxx                 1/1     Running   0          3m
-rook-ceph-mon-b-yyyyy                 1/1     Running   0          3m
-rook-ceph-mon-c-zzzzz                 1/1     Running   0          3m
-rook-ceph-mgr-a-xxxxx                 1/1     Running   0          2m
-rook-ceph-osd-0-xxxxx                 1/1     Running   0          1m
-rook-ceph-osd-1-yyyyy                 1/1     Running   0          1m
-rook-ceph-osd-2-zzzzz                 1/1     Running   0          1m
+**Verify all pods are running after deployment completes:**
+```bash
+kubectl get pods -n rook-ceph
 ```
 
+**Expected pods after full deployment (example with 6 worker nodes):**
+```
+NAME                                                         READY   STATUS      RESTARTS   AGE
+csi-cephfsplugin-6n2bx                                       3/3     Running     0          7m
+csi-cephfsplugin-99xc6                                       3/3     Running     0          7m
+csi-cephfsplugin-db6g9                                       3/3     Running     0          7m
+csi-cephfsplugin-gpf87                                       3/3     Running     0          7m
+csi-cephfsplugin-jxfkj                                       3/3     Running     0          7m
+csi-cephfsplugin-provisioner-66cfc64779-6ljfp                6/6     Running     0          7m
+csi-cephfsplugin-provisioner-66cfc64779-ljkmd                6/6     Running     0          7m
+csi-cephfsplugin-rfgkr                                       3/3     Running     0          7m
+csi-rbdplugin-6p7fs                                          3/3     Running     0          7m
+csi-rbdplugin-959mn                                          3/3     Running     0          7m
+csi-rbdplugin-hfknq                                          3/3     Running     0          7m
+csi-rbdplugin-provisioner-6b4bdc5f8f-jqh47                   6/6     Running     0          7m
+csi-rbdplugin-provisioner-6b4bdc5f8f-sdlqm                   6/6     Running     0          7m
+csi-rbdplugin-rk2vc                                          3/3     Running     0          7m
+csi-rbdplugin-w5lk6                                          3/3     Running     0          7m
+csi-rbdplugin-wwqbv                                          3/3     Running     0          7m
+rook-ceph-crashcollector-tusk1-6594f94758-ddmcv              1/1     Running     0          5m
+rook-ceph-crashcollector-tusk2-58bf49f7b5-s6lsk              1/1     Running     0          5m
+rook-ceph-crashcollector-tusk3-79b64fb599-jf6wm              1/1     Running     0          5m
+rook-ceph-crashcollector-tusk4-7b6db67db9-dkvf2              1/1     Running     0          5m
+rook-ceph-crashcollector-tusk5-68f5445586-4h4jc              1/1     Running     0          5m
+rook-ceph-crashcollector-tusk6-785fd5fb89-mnqp9              1/1     Running     0          5m
+rook-ceph-exporter-tusk1-86d5b9964d-vwnm4                    1/1     Running     0          5m
+rook-ceph-exporter-tusk2-6f79c8b56d-qc6s6                    1/1     Running     0          5m
+rook-ceph-exporter-tusk3-6945b6d6fc-wrkvj                    1/1     Running     0          5m
+rook-ceph-exporter-tusk4-796979856-q95qc                     1/1     Running     0          5m
+rook-ceph-exporter-tusk5-7584f996b9-2gmrw                    1/1     Running     0          5m
+rook-ceph-exporter-tusk6-5c5d6f4958-mljtl                    1/1     Running     0          5m
+rook-ceph-mds-ceph-filesystem-a-7b5654fd5f-5ftdt             2/2     Running     0          5m
+rook-ceph-mds-ceph-filesystem-b-66d5476d86-tqgq5             2/2     Running     0          5m
+rook-ceph-mgr-a-68b456cbb6-vhnqz                             3/3     Running     0          6m
+rook-ceph-mgr-b-54c84f6cc-wh9lj                              3/3     Running     0          5m
+rook-ceph-mon-a-7989f6bcb4-b28jr                             2/2     Running     0          7m
+rook-ceph-mon-b-7c5977d7b4-kfgqb                             2/2     Running     0          7m
+rook-ceph-mon-c-5698c5cbc4-nlnc8                             2/2     Running     0          6m
+rook-ceph-operator-9f74bbd6d-h897l                           1/1     Running     0          10m
+rook-ceph-osd-0-55865f8958-zqr4h                             2/2     Running     0          5m
+rook-ceph-osd-1-55896f69d4-4vdvb                             2/2     Running     0          5m
+rook-ceph-osd-2-5489987874-4stzn                             2/2     Running     0          5m
+rook-ceph-osd-3-5885997c44-7pkjb                             2/2     Running     0          5m
+rook-ceph-osd-4-5f48cfc74b-6s5jk                             2/2     Running     0          5m
+rook-ceph-osd-5-7bb777d5dd-lf94z                             2/2     Running     0          5m
+rook-ceph-osd-prepare-tusk1-scq67                            0/1     Completed   0          6m
+rook-ceph-osd-prepare-tusk2-4rplc                            0/1     Completed   0          6m
+rook-ceph-osd-prepare-tusk3-qnxqr                            0/1     Completed   0          6m
+rook-ceph-osd-prepare-tusk4-k6x7s                            0/1     Completed   0          6m
+rook-ceph-osd-prepare-tusk5-z7j29                            0/1     Completed   0          6m
+rook-ceph-osd-prepare-tusk6-crdbl                            0/1     Completed   0          6m
+rook-ceph-rgw-ceph-objectstore-a-547777869b-f8gxk            2/2     Running     0          4m
+rook-ceph-tools-c6f4d7588-8lrms                              1/1     Running     0          9m
+rook-discover-bpp4f                                          1/1     Running     0          9m
+rook-discover-jcrrn                                          1/1     Running     0          9m
+rook-discover-jjdkj                                          1/1     Running     0          9m
+rook-discover-kjvkx                                          1/1     Running     0          9m
+rook-discover-njgrx                                          1/1     Running     0          9m
+rook-discover-qqv59                                          1/1     Running     0          9m
+```
+
+**Pod Components Explained:**
+
+**CSI Drivers (Storage Interface):**
+- `csi-cephfsplugin-*` - CephFS driver pods (one per worker node, 3/3 containers)
+- `csi-cephfsplugin-provisioner-*` - CephFS provisioner (2 replicas for HA, 6/6 containers)
+- `csi-rbdplugin-*` - RBD block storage driver pods (one per worker node, 3/3 containers)
+- `csi-rbdplugin-provisioner-*` - RBD provisioner (2 replicas for HA, 6/6 containers)
+
+**Ceph Core Components:**
+- `rook-ceph-mon-*` - Monitor pods for cluster coordination (3 replicas, 2/2 containers)
+- `rook-ceph-mgr-*` - Manager pods for cluster management (2 replicas, 3/3 containers)
+- `rook-ceph-osd-*` - Object Storage Daemon pods (one per storage disk, 2/2 containers)
+- `rook-ceph-mds-ceph-filesystem-*` - Metadata server for CephFS (2 replicas, 2/2 containers)
+- `rook-ceph-rgw-ceph-objectstore-*` - RADOS Gateway for object storage (1+ replicas, 2/2 containers)
+
+**Support Components:**
+- `rook-ceph-operator-*` - Rook operator managing the cluster (1/1 container)
+- `rook-discover-*` - Storage device discovery (one per worker node, 1/1 container)
+- `rook-ceph-crashcollector-*` - Crash reporting (one per worker node, 1/1 container)
+- `rook-ceph-exporter-*` - Metrics exporters (one per worker node, 1/1 container)
+- `rook-ceph-osd-prepare-*` - OSD preparation jobs (Completed status, one per node)
+- `rook-ceph-tools-*` - Ceph CLI tools pod (1/1 container)
+
 **Important:**
-- Wait until all MON, MGR, and OSD pods show `Running` status
-- You should see one OSD pod per storage disk across all worker nodes
-- The cluster is ready when all pods are running and healthy
+- **Wait until all pods show `Running` or `Completed` status** before proceeding
+- Number of pods will vary based on your cluster configuration:
+  - **Per worker node**: 1 csi-cephfsplugin, 1 csi-rbdplugin, 1 rook-discover, 1 crashcollector, 1 exporter, 1 osd-prepare (Completed)
+  - **Per storage disk**: 1 rook-ceph-osd pod
+  - **Fixed replicas**: 3 MON, 2 MGR, 2 MDS, 2 CSI provisioners (each type)
+- The cluster is ready when all pods are running/completed and healthy
 
 **Verify storage class:**
 ```bash
