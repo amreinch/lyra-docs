@@ -1027,14 +1027,17 @@ kubectl get pods -n csi-drivers -l app.kubernetes.io/name=csi-driver-smb
 **Expected output:**
 ```
 NAME                                READY   STATUS    RESTARTS   AGE
-csi-smb-controller-xxxxxxxxx-xxxxx  3/3     Running   0          2m
+csi-smb-controller-xxxxxxxxx-xxxxx  4/4     Running   0          2m
+csi-smb-node-xxxxx                  3/3     Running   0          2m
+csi-smb-node-xxxxx                  3/3     Running   0          2m
+csi-smb-node-xxxxx                  3/3     Running   0          2m
 csi-smb-node-xxxxx                  3/3     Running   0          2m
 csi-smb-node-xxxxx                  3/3     Running   0          2m
 csi-smb-node-xxxxx                  3/3     Running   0          2m
 ```
 
 **Pod Components:**
-- **csi-smb-controller**: Controller pod managing volume provisioning (3 containers: smb plugin, csi-provisioner, liveness probe)
+- **csi-smb-controller**: Controller pod managing volume provisioning (4 containers: smb plugin, csi-provisioner, csi-resizer, liveness probe)
 - **csi-smb-node**: DaemonSet running on each node for volume mounting (3 containers: smb plugin, node-driver-registrar, liveness probe)
 
 **Verify CSI Driver Registration:**
@@ -1074,14 +1077,17 @@ kubectl get pods -n csi-drivers -l app.kubernetes.io/name=csi-driver-nfs
 **Expected output:**
 ```
 NAME                                READY   STATUS    RESTARTS   AGE
-csi-nfs-controller-xxxxxxxxx-xxxxx  4/4     Running   0          2m
+csi-nfs-controller-xxxxxxxxx-xxxxx  5/5     Running   0          2m
+csi-nfs-node-xxxxx                  3/3     Running   0          2m
+csi-nfs-node-xxxxx                  3/3     Running   0          2m
+csi-nfs-node-xxxxx                  3/3     Running   0          2m
 csi-nfs-node-xxxxx                  3/3     Running   0          2m
 csi-nfs-node-xxxxx                  3/3     Running   0          2m
 csi-nfs-node-xxxxx                  3/3     Running   0          2m
 ```
 
 **Pod Components:**
-- **csi-nfs-controller**: Controller pod managing volume provisioning (4 containers: nfs plugin, csi-provisioner, csi-snapshotter, liveness probe)
+- **csi-nfs-controller**: Controller pod managing volume provisioning (5 containers: nfs plugin, csi-provisioner, csi-snapshotter, csi-resizer, liveness probe)
 - **csi-nfs-node**: DaemonSet running on each node for volume mounting (3 containers: nfs plugin, node-driver-registrar, liveness probe)
 
 **Verify CSI Driver Registration:**
@@ -1121,14 +1127,17 @@ kubectl get pods -n csi-drivers -l app.kubernetes.io/name=aws-mountpoint-s3-csi-
 **Expected output:**
 ```
 NAME                                     READY   STATUS    RESTARTS   AGE
-s3-csi-controller-xxxxxxxxxx-xxxxx       2/2     Running   0          2m
+s3-csi-controller-xxxxxxxxxx-xxxxx       1/1     Running   0          2m
+s3-csi-node-xxxxx                        3/3     Running   0          2m
+s3-csi-node-xxxxx                        3/3     Running   0          2m
+s3-csi-node-xxxxx                        3/3     Running   0          2m
 s3-csi-node-xxxxx                        3/3     Running   0          2m
 s3-csi-node-xxxxx                        3/3     Running   0          2m
 s3-csi-node-xxxxx                        3/3     Running   0          2m
 ```
 
 **Pod Components:**
-- **s3-csi-controller**: Controller pod for plugin registration (2 containers: s3 driver, liveness probe)
+- **s3-csi-controller**: Controller pod for plugin registration (1 container: s3 driver)
 - **s3-csi-node**: DaemonSet running on each node for S3 bucket mounting (3 containers: s3 driver, node-driver-registrar, liveness probe)
 
 **Verify CSI Driver Registration:**
@@ -1158,15 +1167,24 @@ kubectl get pods -n csi-drivers
 **Expected output (all drivers deployed):**
 ```
 NAME                                     READY   STATUS    RESTARTS   AGE
-csi-smb-controller-xxxxxxxxx-xxxxx       3/3     Running   0          5m
+csi-smb-controller-xxxxxxxxx-xxxxx       4/4     Running   0          5m
 csi-smb-node-xxxxx                       3/3     Running   0          5m
 csi-smb-node-xxxxx                       3/3     Running   0          5m
 csi-smb-node-xxxxx                       3/3     Running   0          5m
-csi-nfs-controller-xxxxxxxxx-xxxxx       4/4     Running   0          4m
+csi-smb-node-xxxxx                       3/3     Running   0          5m
+csi-smb-node-xxxxx                       3/3     Running   0          5m
+csi-smb-node-xxxxx                       3/3     Running   0          5m
+csi-nfs-controller-xxxxxxxxx-xxxxx       5/5     Running   0          4m
 csi-nfs-node-xxxxx                       3/3     Running   0          4m
 csi-nfs-node-xxxxx                       3/3     Running   0          4m
 csi-nfs-node-xxxxx                       3/3     Running   0          4m
-s3-csi-controller-xxxxxxxxxx-xxxxx       2/2     Running   0          3m
+csi-nfs-node-xxxxx                       3/3     Running   0          4m
+csi-nfs-node-xxxxx                       3/3     Running   0          4m
+csi-nfs-node-xxxxx                       3/3     Running   0          4m
+s3-csi-controller-xxxxxxxxxx-xxxxx       1/1     Running   0          3m
+s3-csi-node-xxxxx                        3/3     Running   0          3m
+s3-csi-node-xxxxx                        3/3     Running   0          3m
+s3-csi-node-xxxxx                        3/3     Running   0          3m
 s3-csi-node-xxxxx                        3/3     Running   0          3m
 s3-csi-node-xxxxx                        3/3     Running   0          3m
 s3-csi-node-xxxxx                        3/3     Running   0          3m
