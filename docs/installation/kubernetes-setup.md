@@ -983,7 +983,256 @@ redis-ephemeral-xxxxxxxxxx-xxxxx    1/1     Running   0          2m
 
 ---
 
-## Step 10: Verify Cluster Readiness
+## Step 10: Deploy CSI Drivers for External Storage
+
+### CSI Drivers Overview
+
+Container Storage Interface (CSI) drivers enable Kubernetes to mount external storage systems as persistent volumes. Lyra supports three CSI drivers for accessing external file shares and object storage:
+
+1. **SMB/CIFS CSI Driver** - Mount Windows SMB shares and Samba file servers
+2. **NFS CSI Driver** - Mount NFS (Network File System) shares
+3. **S3 CSI Driver** - Mount S3-compatible object storage (AWS S3, MinIO, etc.)
+
+**Use Cases:**
+- Mounting existing file shares for document processing
+- Accessing shared media storage
+- Connecting to S3 buckets for data lakes
+- Integration with legacy file servers
+
+**Namespace:** All CSI drivers are deployed in the `csi-drivers` namespace.
+
+**Important:** CSI drivers only provide the mounting capability. Actual storage connections (credentials, paths) are configured later via StorageClasses and PersistentVolumeClaims managed by Lyra.
+
+---
+
+### Deploy SMB/CIFS CSI Driver
+
+The SMB CSI driver enables mounting Windows file shares and Samba servers.
+
+**Chart Configuration:**
+- **Name:** Auto-configured (no fixed release name needed)
+- **Namespace:** `csi-drivers`
+- **Chart Version:** 1.0.7 (includes SMB CSI v1.19.1)
+- **Project:** Lyra Platform
+
+**Installation via Rancher:**
+
+1. Navigate to **Apps & Marketplace → Charts** in Rancher
+2. Search for `csi-smb-lyra` in Harbor catalog
+3. Click **Install**
+4. Configure:
+   - **Namespace:** `csi-drivers` (create if needed)
+   - **Name:** Leave default or customize
+   - **Harbor Registry:** Should be pre-configured to use `harbor-registry-secret`
+5. Click **Install** (no additional configuration needed)
+
+**Verify SMB CSI Driver:**
+
+```bash
+# Check CSI driver pods
+kubectl get pods -n csi-drivers -l app.kubernetes.io/name=csi-driver-smb
+```
+
+**Expected output:**
+```
+NAME                                READY   STATUS    RESTARTS   AGE
+csi-smb-controller-xxxxxxxxx-xxxxx  3/3     Running   0          2m
+csi-smb-node-xxxxx                  3/3     Running   0          2m
+csi-smb-node-xxxxx                  3/3     Running   0          2m
+csi-smb-node-xxxxx                  3/3     Running   0          2m
+```
+
+**Pod Components:**
+- **csi-smb-controller**: Controller pod managing volume provisioning (3 containers: smb plugin, csi-provisioner, liveness probe)
+- **csi-smb-node**: DaemonSet running on each node for volume mounting (3 containers: smb plugin, node-driver-registrar, liveness probe)
+
+**Verify CSI Driver Registration:**
+
+```bash
+# Check CSIDriver object
+kubectl get csidriver smb.csi.k8s.io
+```
+
+**Expected output:**
+```
+NAME              ATTACHREQUIRED   PODINFOONMOUNT   STORAGECAPACITY   TOKENREQUESTS   REQUIRESREPUBLISH   MODES        AGE
+smb.csi.k8s.io    false            false            false             <unset>         false               Persistent   2m
+```
+
+---
+
+### Deploy NFS CSI Driver
+
+The NFS CSI driver enables mounting NFS (Network File System) shares.
+
+**Chart Configuration:**
+- **Name:** Auto-configured (no fixed release name needed)
+- **Namespace:** `csi-drivers`
+- **Chart Version:** 1.0.6 (includes NFS CSI v4.12.1)
+- **Project:** Lyra Platform
+
+**Installation via Rancher:**
+
+1. Navigate to **Apps & Marketplace → Charts** in Rancher
+2. Search for `csi-nfs-lyra` in Harbor catalog
+3. Click **Install**
+4. Configure:
+   - **Namespace:** `csi-drivers`
+   - **Name:** Leave default or customize
+   - **Harbor Registry:** Should be pre-configured to use `harbor-registry-secret`
+5. Click **Install** (no additional configuration needed)
+
+**Verify NFS CSI Driver:**
+
+```bash
+# Check CSI driver pods
+kubectl get pods -n csi-drivers -l app.kubernetes.io/name=csi-driver-nfs
+```
+
+**Expected output:**
+```
+NAME                                READY   STATUS    RESTARTS   AGE
+csi-nfs-controller-xxxxxxxxx-xxxxx  4/4     Running   0          2m
+csi-nfs-node-xxxxx                  3/3     Running   0          2m
+csi-nfs-node-xxxxx                  3/3     Running   0          2m
+csi-nfs-node-xxxxx                  3/3     Running   0          2m
+```
+
+**Pod Components:**
+- **csi-nfs-controller**: Controller pod managing volume provisioning (4 containers: nfs plugin, csi-provisioner, csi-snapshotter, liveness probe)
+- **csi-nfs-node**: DaemonSet running on each node for volume mounting (3 containers: nfs plugin, node-driver-registrar, liveness probe)
+
+**Verify CSI Driver Registration:**
+
+```bash
+# Check CSIDriver object
+kubectl get csidriver nfs.csi.k8s.io
+```
+
+**Expected output:**
+```
+NAME              ATTACHREQUIRED   PODINFOONMOUNT   STORAGECAPACITY   TOKENREQUESTS   REQUIRESREPUBLISH   MODES                  AGE
+nfs.csi.k8s.io    false            false            false             <unset>         false               Persistent,Ephemeral   2m
+```
+
+---
+
+### Deploy S3 CSI Driver
+
+The S3 CSI driver enables mounting S3-compatible object storage (AWS S3, MinIO, etc.) as file systems.
+
+**Chart Configuration:**
+- **Name:** Auto-configured (no fixed release name needed)
+- **Namespace:** `csi-drivers`
+- **Chart Version:** 1.0.7 (includes AWS Mountpoint S3 CSI v2.1.0)
+- **Project:** Lyra Platform
+
+**Installation via Rancher:**
+
+1. Navigate to **Apps & Marketplace → Charts** in Rancher
+2. Search for `csi-s3-lyra` in Harbor catalog
+3. Click **Install**
+4. Configure:
+   - **Namespace:** `csi-drivers`
+   - **Name:** Leave default or customize
+   - **Harbor Registry:** Should be pre-configured to use `harbor-registry-secret`
+5. Click **Install** (no additional configuration needed)
+
+**Verify S3 CSI Driver:**
+
+```bash
+# Check CSI driver pods
+kubectl get pods -n csi-drivers -l app.kubernetes.io/name=aws-mountpoint-s3-csi-driver
+```
+
+**Expected output:**
+```
+NAME                                     READY   STATUS    RESTARTS   AGE
+s3-csi-controller-xxxxxxxxxx-xxxxx       2/2     Running   0          2m
+s3-csi-node-xxxxx                        3/3     Running   0          2m
+s3-csi-node-xxxxx                        3/3     Running   0          2m
+s3-csi-node-xxxxx                        3/3     Running   0          2m
+```
+
+**Pod Components:**
+- **s3-csi-controller**: Controller pod for plugin registration (2 containers: s3 driver, liveness probe)
+- **s3-csi-node**: DaemonSet running on each node for S3 bucket mounting (3 containers: s3 driver, node-driver-registrar, liveness probe)
+
+**Verify CSI Driver Registration:**
+
+```bash
+# Check CSIDriver object
+kubectl get csidriver s3.csi.aws.com
+```
+
+**Expected output:**
+```
+NAME             ATTACHREQUIRED   PODINFOONMOUNT   STORAGECAPACITY   TOKENREQUESTS   REQUIRESREPUBLISH   MODES        AGE
+s3.csi.aws.com   false            true             false             <unset>         false               Persistent   2m
+```
+
+---
+
+### CSI Drivers Summary
+
+After deploying all three CSI drivers, verify the complete CSI infrastructure:
+
+**Check all CSI driver pods:**
+```bash
+kubectl get pods -n csi-drivers
+```
+
+**Expected output (all drivers deployed):**
+```
+NAME                                     READY   STATUS    RESTARTS   AGE
+csi-smb-controller-xxxxxxxxx-xxxxx       3/3     Running   0          5m
+csi-smb-node-xxxxx                       3/3     Running   0          5m
+csi-smb-node-xxxxx                       3/3     Running   0          5m
+csi-smb-node-xxxxx                       3/3     Running   0          5m
+csi-nfs-controller-xxxxxxxxx-xxxxx       4/4     Running   0          4m
+csi-nfs-node-xxxxx                       3/3     Running   0          4m
+csi-nfs-node-xxxxx                       3/3     Running   0          4m
+csi-nfs-node-xxxxx                       3/3     Running   0          4m
+s3-csi-controller-xxxxxxxxxx-xxxxx       2/2     Running   0          3m
+s3-csi-node-xxxxx                        3/3     Running   0          3m
+s3-csi-node-xxxxx                        3/3     Running   0          3m
+s3-csi-node-xxxxx                        3/3     Running   0          3m
+```
+
+**Check all registered CSI drivers:**
+```bash
+kubectl get csidriver
+```
+
+**Expected output:**
+```
+NAME              ATTACHREQUIRED   PODINFOONMOUNT   STORAGECAPACITY   MODES
+nfs.csi.k8s.io    false            false            false             Persistent,Ephemeral
+s3.csi.aws.com    false            true             false             Persistent
+smb.csi.k8s.io    false            false            false             Persistent
+```
+
+**Important Notes:**
+
+1. **No Storage Classes Created**: These charts only deploy CSI drivers. Storage classes are created later by Lyra when configuring document sources.
+
+2. **Credentials Management**: S3 and authenticated SMB/NFS shares require credentials, which are managed through Kubernetes secrets created by Lyra.
+
+3. **S3 Compatibility**: The S3 CSI driver works with AWS S3, MinIO, Ceph Object Gateway, and other S3-compatible storage systems.
+
+4. **Node Requirements**:
+   - SMB: Requires `cifs-utils` package on Linux nodes
+   - NFS: Requires `nfs-common` package on Linux nodes
+   - S3: No special node requirements (uses FUSE)
+
+5. **Performance Considerations**:
+   - SMB/NFS: Good for file-based workloads, supports concurrent access
+   - S3: Best for read-heavy workloads, limited write performance
+   - All drivers suitable for document processing pipelines
+
+---
+
+## Step 11: Verify Cluster Readiness
 
 ### Final Verification Checklist
 
@@ -1006,7 +1255,19 @@ kubectl get pods -n rook-ceph
 kubectl get storageclass
 # Should show rook-ceph-block as default
 
-# 5. Test storage provisioning
+# 5. PostgreSQL is running
+kubectl get pods -n databases -l app.kubernetes.io/name=lyra-postgres
+# Should show 3 postgres pods running
+
+# 6. Redis is running
+kubectl get pods -n databases -l app=redis-ha
+# Should show 3 redis-ha server pods running
+
+# 7. CSI drivers are running
+kubectl get pods -n csi-drivers
+# Should show SMB, NFS, and S3 CSI driver pods running
+
+# 8. Test storage provisioning
 kubectl apply -f - <<EOF
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -1021,15 +1282,34 @@ spec:
   storageClassName: rook-ceph-block
 EOF
 
-# 6. Check PVC status
+# 9. Check PVC status
 kubectl get pvc test-pvc
 # Should show STATUS: Bound
 
-# 7. Clean up test PVC
+# 10. Clean up test PVC
 kubectl delete pvc test-pvc
 ```
 
 **All checks should pass before proceeding to Lyra deployment.**
+
+### Infrastructure Summary
+
+After completing all steps, your Kubernetes cluster includes:
+
+**Storage Infrastructure:**
+- ✅ Rook-Ceph storage cluster with RBD and CephFS storage classes
+- ✅ CSI drivers for external storage (SMB, NFS, S3)
+
+**Database Infrastructure:**
+- ✅ PostgreSQL cluster (3 replicas with high availability)
+- ✅ Redis HA (persistent with Sentinel)
+- ✅ Redis Ephemeral (memory-only for sessions)
+
+**Cluster Configuration:**
+- ✅ Multiple worker nodes with storage devices
+- ✅ Rancher management integration
+- ✅ Harbor registry integration
+- ✅ All components using Harbor registry for images
 
 ---
 
