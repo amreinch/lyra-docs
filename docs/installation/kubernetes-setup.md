@@ -516,95 +516,61 @@ Install the **rook-ceph-lyra-operator** chart following the deployment process d
    - Wait until all pods show `Running` status and `1/1` READY before proceeding
    - The discovery pods detect available storage devices on each node
 
-### Create Ceph Cluster
+### Deploy Ceph Cluster
 
-1. **Create Ceph cluster configuration file** `ceph-cluster.yaml`:
+Now that the Rook operator is running, deploy the Ceph cluster using the **rook-ceph-lyra-cluster** Helm chart.
 
-   ```yaml
-   apiVersion: ceph.rook.io/v1
-   kind: CephCluster
-   metadata:
-     name: rook-ceph
-     namespace: rook-ceph
-   spec:
-     cephVersion:
-       image: quay.io/ceph/ceph:v17.2.6
-     dataDirHostPath: /var/lib/rook
-     mon:
-       count: 3
-       allowMultiplePerNode: false
-     mgr:
-       count: 2
-       allowMultiplePerNode: false
-     dashboard:
-       enabled: true
-     storage:
-       useAllNodes: true
-       useAllDevices: false
-       deviceFilter: "^sd[b-z]"  # Use sdb, sdc, sdd, etc. (NOT sda)
-       config:
-         osdsPerDevice: "1"
-   ```
+**Purpose of rook-ceph-lyra-cluster:**
+- Automatically creates and configures the Ceph storage cluster
+- Deploys Ceph Monitor (MON) pods for cluster coordination
+- Creates Ceph OSD (Object Storage Daemon) pods on each worker node's storage disks
+- Deploys Ceph Manager (MGR) pods for cluster management
+- Automatically creates and configures storage classes (RBD block storage and CephFS)
+- Sets up the default storage class for Kubernetes persistent volumes
 
-2. **Apply the configuration:**
-   ```bash
-   kubectl apply -f ceph-cluster.yaml
-   ```
+Install the **rook-ceph-lyra-cluster** chart following the deployment process described in Step 6.
 
-3. **Monitor Ceph cluster creation** (takes 5-10 minutes):
-   ```bash
-   kubectl get pods -n rook-ceph -w
-   ```
+**Chart Configuration:**
+- **Name:** `rook-ceph-cluster`
+- **Namespace:** `rook-ceph`
+- **Chart Version:** Latest stable version
 
-   Wait until you see:
-   - `rook-ceph-mon-*` pods running
-   - `rook-ceph-osd-*` pods running (one per storage disk)
-   - `rook-ceph-mgr-*` pods running
+**Monitor Ceph cluster creation** (takes 5-10 minutes):
+```bash
+kubectl get pods -n rook-ceph -w
+```
 
-### Create Storage Classes
+**Expected pods after deployment:**
+```
+NAME                                  READY   STATUS    RESTARTS   AGE
+rook-ceph-operator-xxxxx              1/1     Running   0          5m
+rook-discover-xxxxx                   1/1     Running   0          5m
+rook-discover-yyyyy                   1/1     Running   0          5m
+rook-discover-zzzzz                   1/1     Running   0          5m
+rook-ceph-mon-a-xxxxx                 1/1     Running   0          3m
+rook-ceph-mon-b-yyyyy                 1/1     Running   0          3m
+rook-ceph-mon-c-zzzzz                 1/1     Running   0          3m
+rook-ceph-mgr-a-xxxxx                 1/1     Running   0          2m
+rook-ceph-osd-0-xxxxx                 1/1     Running   0          1m
+rook-ceph-osd-1-yyyyy                 1/1     Running   0          1m
+rook-ceph-osd-2-zzzzz                 1/1     Running   0          1m
+```
 
-1. **Create block storage class** `ceph-block-sc.yaml`:
+**Important:**
+- Wait until all MON, MGR, and OSD pods show `Running` status
+- You should see one OSD pod per storage disk across all worker nodes
+- The cluster is ready when all pods are running and healthy
 
-   ```yaml
-   apiVersion: storage.k8s.io/v1
-   kind: StorageClass
-   metadata:
-     name: rook-ceph-block
-   provisioner: rook-ceph.rbd.csi.ceph.com
-   parameters:
-     clusterID: rook-ceph
-     pool: replicapool
-     imageFormat: "2"
-     imageFeatures: layering
-     csi.storage.k8s.io/provisioner-secret-name: rook-csi-rbd-provisioner
-     csi.storage.k8s.io/provisioner-secret-namespace: rook-ceph
-     csi.storage.k8s.io/node-stage-secret-name: rook-csi-rbd-node
-     csi.storage.k8s.io/node-stage-secret-namespace: rook-ceph
-     csi.storage.k8s.io/fstype: ext4
-   allowVolumeExpansion: true
-   reclaimPolicy: Delete
-   ```
+**Verify storage class:**
+```bash
+kubectl get storageclass
+```
 
-2. **Apply storage class:**
-   ```bash
-   kubectl apply -f ceph-block-sc.yaml
-   ```
-
-3. **Set as default storage class:**
-   ```bash
-   kubectl patch storageclass rook-ceph-block -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
-   ```
-
-4. **Verify storage class:**
-   ```bash
-   kubectl get storageclass
-   ```
-
-   **Expected output:**
-   ```
-   NAME                        PROVISIONER                     AGE
-   rook-ceph-block (default)   rook-ceph.rbd.csi.ceph.com      1m
-   ```
+**Expected output:**
+```
+NAME                        PROVISIONER                     AGE
+rook-ceph-block (default)   rook-ceph.rbd.csi.ceph.com      1m
+```
 
 ---
 
