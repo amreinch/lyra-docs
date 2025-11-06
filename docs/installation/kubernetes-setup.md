@@ -860,15 +860,16 @@ kubectl get pods -n databases -l app=redis-ha
 **Expected output:**
 ```
 NAME                       READY   STATUS    RESTARTS   AGE
-redis-redis-ha-server-0    2/2     Running   0          2m
-redis-redis-ha-server-1    2/2     Running   0          2m
-redis-redis-ha-server-2    2/2     Running   0          2m
+redis-redis-ha-server-0    3/3     Running   0          2m
+redis-redis-ha-server-1    3/3     Running   0          2m
+redis-redis-ha-server-2    3/3     Running   0          2m
 ```
 
 **Pod Components:**
-- Each pod runs 2 containers: Redis server + Sentinel
+- Each pod runs 3 containers: Redis server + Sentinel + Metrics exporter
 - 3 replicas provide high availability with automatic failover
 - Sentinel monitors Redis instances and manages failover
+- Metrics exporter provides Prometheus metrics for monitoring
 
 **Verify Redis HA services:**
 ```bash
