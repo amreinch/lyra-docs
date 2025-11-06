@@ -507,7 +507,14 @@ Install the **rook-ceph-lyra-operator** chart following the deployment process d
    NAME                                  READY   STATUS    RESTARTS   AGE
    rook-ceph-operator-xxxxx              1/1     Running   0          2m
    rook-discover-xxxxx                   1/1     Running   0          2m
+   rook-discover-yyyyy                   1/1     Running   0          2m
+   rook-discover-zzzzz                   1/1     Running   0          2m
    ```
+
+   **Important:**
+   - There will be one `rook-discover` pod for each node with the Worker role
+   - Wait until all pods show `Running` status and `1/1` READY before proceeding
+   - The discovery pods detect available storage devices on each node
 
 ### Create Ceph Cluster
 
