@@ -1246,7 +1246,7 @@ MetalLB is a load balancer implementation for bare-metal Kubernetes clusters. It
 **Chart:** `metallb-lyra`
 
 **Chart Configuration:**
-- **Name:** Auto-configured (no fixed release name)
+- **Name:** `metallb`
 - **Namespace:** `metallb-system`
 - **Chart Version:** Latest stable version
 - **Project:** Lyra Platform
