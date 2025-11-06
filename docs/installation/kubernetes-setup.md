@@ -446,7 +446,7 @@ All deployments are managed through Rancher's Apps & Marketplace interface using
    - **Namespace:** The Helm charts define the namespace automatically
    - **Names:** Names are also defined by the Helm chart
    - **Project:** Select **Lyra Platform** from the dropdown (the project you created earlier)
-   - **Helm Values:** You can configure the deployment through Rancher's UI forms
+   - **Helm Values:** Each chart includes predefined values that can be customized through Rancher's configuration forms. All values are already configured to work out of the box, but you can adjust them to match your specific requirements.
 
 4. **Click Install** and wait for deployment to complete
 
