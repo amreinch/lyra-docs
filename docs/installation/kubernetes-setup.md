@@ -650,7 +650,160 @@ rook-ceph-block (default)   rook-ceph.rbd.csi.ceph.com      1m
 
 ---
 
-## Step 8: Verify Cluster Readiness
+## Step 8: Deploy PostgreSQL Database
+
+Lyra Platform requires PostgreSQL as its primary database. The deployment follows the operator pattern with two separate Helm charts.
+
+### Database Deployment Architecture
+
+**Operator Pattern**: PostgreSQL deployment uses two charts:
+1. **postgres-operator**: Manages PostgreSQL clusters (installed once)
+2. **postgres-cluster**: Actual PostgreSQL database instances (one per cluster needed)
+
+**Namespace**: All database components are deployed in the `databases` namespace.
+
+### Install PostgreSQL Operator
+
+The PostgreSQL operator manages the lifecycle of PostgreSQL clusters within Kubernetes.
+
+**Purpose of postgres-operator:**
+- Manages PostgreSQL cluster creation and lifecycle
+- Handles high availability and failover
+- Automates backups and recovery
+- Provides connection pooling with PgBouncer
+- Monitors database health and performance
+
+Install the **postgres-operator** chart following the deployment process described in Step 6.
+
+**Chart Configuration:**
+- **Name:** `postgres-operator`
+- **Namespace:** `databases`
+- **Chart Version:** Latest stable version
+- **Project:** `Lyra Platform`
+
+**Verify PostgreSQL Operator is running:**
+```bash
+kubectl get pods -n databases
+```
+
+**Expected output:**
+```
+NAME                                 READY   STATUS    RESTARTS   AGE
+postgres-operator-xxxxxxxxxx-xxxxx   1/1     Running   0          2m
+```
+
+**Important:**
+- Wait until the operator pod shows `Running` status and `1/1` READY before proceeding
+- The operator must be running before deploying any PostgreSQL clusters
+
+### Deploy PostgreSQL Cluster
+
+Now that the PostgreSQL operator is running, deploy the actual PostgreSQL database cluster.
+
+**Purpose of postgres-cluster:**
+- Creates a highly available PostgreSQL database cluster
+- Configures persistent storage using Ceph/Rook
+- Sets up connection pooling with PgBouncer
+- Provides automatic backups and point-in-time recovery
+- Creates database users and credentials
+
+Install the **postgres-cluster** chart following the deployment process described in Step 6.
+
+**Chart Configuration:**
+- **Name:** `postgres-cluster` (or your preferred cluster name)
+- **Namespace:** `databases`
+- **Chart Version:** Latest stable version
+- **Project:** `Lyra Platform`
+
+**Important Configuration Values:**
+- **Cluster Name**: Name of your PostgreSQL cluster (e.g., `lyra-postgres`)
+- **Number of Instances**: Replica count (recommended: 2+ for HA)
+- **Storage Size**: Persistent volume size (e.g., `10Gi` for development, `100Gi+` for production)
+- **Storage Class**: `rook-ceph-block` (uses Ceph storage from Step 7)
+- **Database Name**: Initial database to create (e.g., `lyra`)
+- **Database User**: Application database user (e.g., `lyra_user`)
+
+**Monitor PostgreSQL cluster creation** (takes 2-5 minutes):
+```bash
+kubectl get pods -n databases -w
+```
+
+**Verify all PostgreSQL pods are running:**
+```bash
+kubectl get pods -n databases
+```
+
+**Expected output (for 2-replica cluster):**
+```
+NAME                                 READY   STATUS    RESTARTS   AGE
+postgres-operator-xxxxxxxxxx-xxxxx   1/1     Running   0          5m
+lyra-postgres-0                      1/1     Running   0          2m
+lyra-postgres-1                      1/1     Running   0          2m
+lyra-postgres-pooler-xxxxxxxxxx-xxxxx 1/1     Running   0          2m
+```
+
+**Pod Components:**
+- `postgres-operator-*` - PostgreSQL operator managing clusters
+- `lyra-postgres-0`, `lyra-postgres-1` - PostgreSQL database instances (replicas)
+- `lyra-postgres-pooler-*` - PgBouncer connection pooler
+
+**Verify PostgreSQL cluster status:**
+```bash
+kubectl get postgresql -n databases
+```
+
+**Expected output:**
+```
+NAME            TEAM   VERSION   PODS   VOLUME   CPU-REQUEST   MEMORY-REQUEST   AGE   STATUS
+lyra-postgres   lyra   16        2      10Gi     100m          256Mi            2m    Running
+```
+
+**Verify PostgreSQL services:**
+```bash
+kubectl get svc -n databases
+```
+
+**Expected output:**
+```
+NAME                       TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
+lyra-postgres              ClusterIP   10.43.xxx.xxx   <none>        5432/TCP   2m
+lyra-postgres-pooler       ClusterIP   10.43.xxx.xxx   <none>        5432/TCP   2m
+lyra-postgres-repl         ClusterIP   10.43.xxx.xxx   <none>        5432/TCP   2m
+```
+
+**Service Endpoints:**
+- `lyra-postgres` - Primary database connection endpoint
+- `lyra-postgres-pooler` - Connection pooler endpoint (recommended for applications)
+- `lyra-postgres-repl` - Read replica endpoint
+
+**Retrieve Database Credentials:**
+
+The PostgreSQL operator automatically creates Kubernetes secrets with database credentials:
+
+```bash
+# List secrets in databases namespace
+kubectl get secrets -n databases
+
+# View database user credentials
+kubectl get secret <username>.<cluster-name>.credentials.postgresql.acid.zalan.do \
+  -n databases -o jsonpath='{.data.password}' | base64 -d
+```
+
+**Example:**
+```bash
+# For user 'lyra_user' in cluster 'lyra-postgres'
+kubectl get secret lyra_user.lyra-postgres.credentials.postgresql.acid.zalan.do \
+  -n databases -o jsonpath='{.data.password}' | base64 -d
+```
+
+**Important:**
+- Save database credentials securely - they will be needed for Lyra application configuration
+- The connection string format: `postgresql://lyra_user:<password>@lyra-postgres-pooler.databases.svc.cluster.local:5432/lyra`
+- Always use the pooler endpoint for application connections for better performance and connection management
+
+---
+
+## Step 9: Verify Cluster Readiness
 
 ### Final Verification Checklist
 
