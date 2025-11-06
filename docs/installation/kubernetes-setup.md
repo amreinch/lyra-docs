@@ -1223,7 +1223,190 @@ smb.csi.k8s.io    false            false            false             Persistent
 
 ---
 
-## Step 11: Verify Cluster Readiness
+## Step 11: Deploy MetalLB Load Balancer
+
+### MetalLB Overview
+
+MetalLB is a load balancer implementation for bare-metal Kubernetes clusters. It enables Kubernetes services of type `LoadBalancer` to work on infrastructure that doesn't have a native load balancer (unlike cloud providers like AWS, GCP, Azure).
+
+**Why MetalLB?**
+- Provides external IP addresses for LoadBalancer services
+- Enables external access to Kubernetes services (Ingress controllers, APIs, etc.)
+- Essential for bare-metal and on-premises Kubernetes deployments
+- Supports Layer 2 (ARP/NDP) and BGP modes
+
+**Operating Mode:** Lyra uses Layer 2 (L2) mode by default, which is simpler and works on most networks without requiring router configuration.
+
+**Namespace:** MetalLB is deployed in the `metallb-system` namespace.
+
+---
+
+### Deploy MetalLB
+
+**Chart:** `metallb-lyra`
+
+**Chart Configuration:**
+- **Name:** Auto-configured (no fixed release name)
+- **Namespace:** `metallb-system`
+- **Chart Version:** Latest stable version
+- **Project:** Lyra Platform
+
+**Important Configuration Values:**
+
+Before installing, you must configure the IP address pool that MetalLB will use to assign external IPs to LoadBalancer services.
+
+**IP Address Pool Configuration:**
+```yaml
+ipAddressPool:
+  enabled: true
+  name: "default-pool"
+  addresses:
+    - "192.168.0.150-192.168.0.200"  # Adjust for your network
+```
+
+**⚠️ IMPORTANT:** The IP address range must:
+- Be on the same network/subnet as your Kubernetes nodes
+- NOT overlap with your DHCP server's range
+- NOT be already in use by other devices
+- Be routable from your network
+
+**Example Network Configuration:**
+- Network: `192.168.0.0/24`
+- Router: `192.168.0.1`
+- Kubernetes Nodes: `192.168.0.57-192.168.0.62`
+- DHCP Range: `192.168.0.100-192.168.0.149`
+- **MetalLB Pool: `192.168.0.150-192.168.0.200`** ✅ (Safe range)
+
+---
+
+### Configure IP Address Pool via Rancher
+
+When installing via Rancher, you'll be prompted to configure the IP address pool:
+
+1. Navigate to **Apps & Marketplace → Charts** in Rancher
+2. Search for `metallb-lyra` in Harbor catalog
+3. Click **Install**
+4. Configure:
+   - **Namespace:** `metallb-system` (create if needed)
+   - **IP Address Pool → Addresses:** Enter your IP range (e.g., `192.168.0.150-192.168.0.200`)
+5. Review other settings (defaults are usually fine)
+6. Click **Install**
+
+---
+
+### Verify MetalLB Deployment
+
+**Check MetalLB pods:**
+```bash
+kubectl get pods -n metallb-system
+```
+
+**Expected output:**
+```
+NAME                                  READY   STATUS    RESTARTS   AGE
+metallb-controller-xxxxxxxxxx-xxxxx   1/1     Running   0          2m
+metallb-speaker-xxxxx                 1/1     Running   0          2m
+metallb-speaker-xxxxx                 1/1     Running   0          2m
+metallb-speaker-xxxxx                 1/1     Running   0          2m
+metallb-speaker-xxxxx                 1/1     Running   0          2m
+metallb-speaker-xxxxx                 1/1     Running   0          2m
+metallb-speaker-xxxxx                 1/1     Running   0          2m
+```
+
+**Pod Components:**
+- **metallb-controller**: Central controller managing IP address allocation (1 replica)
+- **metallb-speaker**: DaemonSet running on each node for L2 advertisement (announces IPs via ARP)
+
+**Verify IP Address Pool:**
+```bash
+kubectl get ipaddresspool -n metallb-system
+```
+
+**Expected output:**
+```
+NAME           AUTO ASSIGN   AVOID BUGGY IPS   ADDRESSES
+default-pool   true          false             ["192.168.0.150-192.168.0.200"]
+```
+
+**Verify L2 Advertisement:**
+```bash
+kubectl get l2advertisement -n metallb-system
+```
+
+**Expected output:**
+```
+NAME                    IPADDRESSPOOLS   IPADDRESSPOOL SELECTORS   INTERFACES
+default-advertisement   []               []                        []
+```
+
+---
+
+### Test MetalLB
+
+Create a test LoadBalancer service to verify MetalLB assigns an external IP:
+
+```bash
+# Create a test service
+kubectl create deployment nginx-test --image=nginx --port=80
+kubectl expose deployment nginx-test --type=LoadBalancer --port=80
+
+# Check the service
+kubectl get svc nginx-test
+```
+
+**Expected output:**
+```
+NAME         TYPE           CLUSTER-IP      EXTERNAL-IP       PORT(S)        AGE
+nginx-test   LoadBalancer   10.43.xxx.xxx   192.168.0.150     80:xxxxx/TCP   30s
+```
+
+**✅ Success:** The `EXTERNAL-IP` field shows an IP from your MetalLB pool (not `<pending>`)
+
+**Test external access:**
+```bash
+# Access the service from outside the cluster
+curl http://192.168.0.150
+# Should return nginx welcome page
+```
+
+**Clean up test service:**
+```bash
+kubectl delete svc nginx-test
+kubectl delete deployment nginx-test
+```
+
+---
+
+### MetalLB Important Notes
+
+1. **Network Requirements:**
+   - All nodes must be on the same Layer 2 network
+   - Network switches must support ARP (most do by default)
+   - Firewall must allow traffic to the IP pool range
+
+2. **IP Address Management:**
+   - MetalLB assigns IPs from the pool on a first-come, first-served basis
+   - IPs are retained when services are deleted (can be reclaimed)
+   - You can configure multiple IP pools for different purposes
+
+3. **BGP Mode (Advanced):**
+   - If you have BGP-capable routers, you can use BGP mode instead of L2
+   - BGP provides better load distribution and fault tolerance
+   - Requires router configuration (not covered in this guide)
+
+4. **Integration with Ingress:**
+   - MetalLB will assign an external IP to your Ingress controller
+   - This enables external access to all Ingress-managed applications
+   - Typically one LoadBalancer IP for the Ingress controller serves all apps
+
+5. **High Availability:**
+   - MetalLB speakers use memberlist protocol to coordinate
+   - If a node fails, another speaker takes over IP advertisement
+   - Controller has built-in leader election
+
+---
+
+## Step 12: Verify Cluster Readiness
 
 ### Final Verification Checklist
 
@@ -1258,7 +1441,15 @@ kubectl get pods -n databases -l app=redis-ha
 kubectl get pods -n csi-drivers
 # Should show SMB, NFS, and S3 CSI driver pods running
 
-# 8. Test storage provisioning
+# 8. MetalLB is running
+kubectl get pods -n metallb-system
+# Should show metallb-controller and metallb-speaker pods running
+
+# 9. MetalLB IP pool configured
+kubectl get ipaddresspool -n metallb-system
+# Should show configured IP address pool
+
+# 10. Test storage provisioning
 kubectl apply -f - <<EOF
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -1273,11 +1464,11 @@ spec:
   storageClassName: rook-ceph-block
 EOF
 
-# 9. Check PVC status
+# 11. Check PVC status
 kubectl get pvc test-pvc
 # Should show STATUS: Bound
 
-# 10. Clean up test PVC
+# 12. Clean up test PVC
 kubectl delete pvc test-pvc
 ```
 
@@ -1295,6 +1486,10 @@ After completing all steps, your Kubernetes cluster includes:
 - ✅ PostgreSQL cluster (3 replicas with high availability)
 - ✅ Redis HA (persistent with Sentinel)
 - ✅ Redis Ephemeral (memory-only for sessions)
+
+**Networking Infrastructure:**
+- ✅ MetalLB load balancer with configured IP pool
+- ✅ Layer 2 mode for external service access
 
 **Cluster Configuration:**
 - ✅ Multiple worker nodes with storage devices
