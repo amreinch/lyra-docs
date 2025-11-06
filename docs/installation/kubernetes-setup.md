@@ -490,23 +490,14 @@ sdc      8:32   0   500G  0 disk           # Storage disk (optional)
 
 ### Install Rook Operator via Rancher
 
-1. **In Rancher UI, navigate to:**
-   - Click your cluster name
-   - Go to **Apps & Marketplace** → **Charts**
+Install the **rook-ceph-lyra-operator** chart following the deployment process described above in Step 6.
 
-2. **Search for "Rook-Ceph"**
+**Chart Configuration:**
+- **Name:** `rook-ceph`
+- **Namespace:** `rook-ceph` (create new)
+- **Chart Version:** Latest stable version
 
-3. **Click "Install"** and configure:
-
-   **Name:** `rook-ceph`
-
-   **Namespace:** `rook-ceph` (create new)
-
-   **Chart Version:** Latest stable version
-
-4. **Click "Install"** and wait for deployment
-
-5. **Verify Rook Operator is running:**
+**Verify Rook Operator is running:**
    ```bash
    kubectl get pods -n rook-ceph
    ```
