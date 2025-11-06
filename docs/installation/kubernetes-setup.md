@@ -670,7 +670,6 @@ The PostgreSQL operator manages the lifecycle of PostgreSQL clusters within Kube
 - Manages PostgreSQL cluster creation and lifecycle
 - Handles high availability and failover
 - Automates backups and recovery
-- Provides connection pooling with PgBouncer
 - Monitors database health and performance
 
 Install the **postgres-operator** chart following the deployment process described in Step 6.
@@ -703,9 +702,9 @@ Now that the PostgreSQL operator is running, deploy the actual PostgreSQL databa
 **Purpose of postgres-cluster:**
 - Creates a highly available PostgreSQL database cluster
 - Configures persistent storage using Ceph/Rook
-- Sets up connection pooling with PgBouncer
 - Provides automatic backups and point-in-time recovery
 - Creates database users and credentials
+- Manages automatic failover and replication
 
 Install the **postgres-cluster** chart following the deployment process described in Step 6.
 
@@ -717,10 +716,10 @@ Install the **postgres-cluster** chart following the deployment process describe
 
 **Important Configuration Values:**
 - **Cluster Name**: Name of your PostgreSQL cluster (e.g., `lyra-postgres`)
-- **Number of Instances**: Replica count (recommended: 2+ for HA)
-- **Storage Size**: Persistent volume size (e.g., `10Gi` for development, `100Gi+` for production)
+- **Number of Instances**: Replica count (default: 3 for HA, minimum: 1 for development)
+- **Storage Size**: Persistent volume size (default: `10Gi` for development, `100Gi+` for production)
 - **Storage Class**: `rook-ceph-block` (uses Ceph storage from Step 7)
-- **Database Name**: Initial database to create (e.g., `lyra`)
+- **Database Name**: Initial database to create (e.g., `lyra_db`)
 - **Database User**: Application database user (e.g., `lyra_user`)
 
 **Monitor PostgreSQL cluster creation** (takes 2-5 minutes):
@@ -733,29 +732,28 @@ kubectl get pods -n databases -w
 kubectl get pods -n databases
 ```
 
-**Expected output (for 2-replica cluster):**
+**Expected output (for 3-replica cluster):**
 ```
 NAME                                 READY   STATUS    RESTARTS   AGE
 postgres-operator-xxxxxxxxxx-xxxxx   1/1     Running   0          5m
-lyra-postgres-0                      1/1     Running   0          2m
-lyra-postgres-1                      1/1     Running   0          2m
-lyra-postgres-pooler-xxxxxxxxxx-xxxxx 1/1     Running   0          2m
+lyra-postgres-1                      1/1     Running   0          3m
+lyra-postgres-2                      1/1     Running   0          2m
+lyra-postgres-3                      1/1     Running   0          2m
 ```
 
 **Pod Components:**
 - `postgres-operator-*` - PostgreSQL operator managing clusters
-- `lyra-postgres-0`, `lyra-postgres-1` - PostgreSQL database instances (replicas)
-- `lyra-postgres-pooler-*` - PgBouncer connection pooler
+- `lyra-postgres-1`, `lyra-postgres-2`, `lyra-postgres-3` - PostgreSQL database instances (replicas)
 
 **Verify PostgreSQL cluster status:**
 ```bash
-kubectl get postgresql -n databases
+kubectl get cluster -n databases
 ```
 
 **Expected output:**
 ```
-NAME            TEAM   VERSION   PODS   VOLUME   CPU-REQUEST   MEMORY-REQUEST   AGE   STATUS
-lyra-postgres   lyra   16        2      10Gi     100m          256Mi            2m    Running
+NAME            AGE   INSTANCES   READY   STATUS                     PRIMARY
+lyra-postgres   3m    3           3       Cluster in healthy state   lyra-postgres-1
 ```
 
 **Verify PostgreSQL services:**
@@ -765,41 +763,46 @@ kubectl get svc -n databases
 
 **Expected output:**
 ```
-NAME                       TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
-lyra-postgres              ClusterIP   10.43.xxx.xxx   <none>        5432/TCP   2m
-lyra-postgres-pooler       ClusterIP   10.43.xxx.xxx   <none>        5432/TCP   2m
-lyra-postgres-repl         ClusterIP   10.43.xxx.xxx   <none>        5432/TCP   2m
+NAME                TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
+lyra-postgres-r     ClusterIP   10.43.xxx.xxx   <none>        5432/TCP   3m
+lyra-postgres-ro    ClusterIP   10.43.xxx.xxx   <none>        5432/TCP   3m
+lyra-postgres-rw    ClusterIP   10.43.xxx.xxx   <none>        5432/TCP   3m
 ```
 
 **Service Endpoints:**
-- `lyra-postgres` - Primary database connection endpoint
-- `lyra-postgres-pooler` - Connection pooler endpoint (recommended for applications)
-- `lyra-postgres-repl` - Read replica endpoint
+- `lyra-postgres-rw` - Read-Write endpoint (primary) - Use this for application connections
+- `lyra-postgres-ro` - Read-Only endpoint (replicas) - Use for read-only queries
+- `lyra-postgres-r` - Read endpoint (any instance) - Load-balanced across all instances
 
 **Retrieve Database Credentials:**
 
-The PostgreSQL operator automatically creates Kubernetes secrets with database credentials:
+CloudNativePG automatically creates a Kubernetes secret with the application database credentials:
 
 ```bash
 # List secrets in databases namespace
 kubectl get secrets -n databases
 
-# View database user credentials
-kubectl get secret <username>.<cluster-name>.credentials.postgresql.acid.zalan.do \
-  -n databases -o jsonpath='{.data.password}' | base64 -d
+# View the application database credentials secret
+kubectl get secret lyra-postgres-app -n databases -o yaml
 ```
 
-**Example:**
+**Retrieve specific credentials:**
 ```bash
-# For user 'lyra_user' in cluster 'lyra-postgres'
-kubectl get secret lyra_user.lyra-postgres.credentials.postgresql.acid.zalan.do \
-  -n databases -o jsonpath='{.data.password}' | base64 -d
+# Get database username
+kubectl get secret lyra-postgres-app -n databases -o jsonpath='{.data.username}' | base64 -d
+
+# Get database password
+kubectl get secret lyra-postgres-app -n databases -o jsonpath='{.data.password}' | base64 -d
+
+# Get full connection URI
+kubectl get secret lyra-postgres-app -n databases -o jsonpath='{.data.uri}' | base64 -d
 ```
 
 **Important:**
 - Save database credentials securely - they will be needed for Lyra application configuration
-- The connection string format: `postgresql://lyra_user:<password>@lyra-postgres-pooler.databases.svc.cluster.local:5432/lyra`
-- Always use the pooler endpoint for application connections for better performance and connection management
+- The connection string format: `postgresql://<username>:<password>@lyra-postgres-rw.databases.svc.cluster.local:5432/<database>`
+- Always use the `-rw` (read-write) endpoint for application connections that need write access
+- Use the `-ro` (read-only) endpoint for read-only queries to distribute load across replicas
 
 ---
 
