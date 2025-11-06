@@ -1009,22 +1009,13 @@ Container Storage Interface (CSI) drivers enable Kubernetes to mount external st
 
 The SMB CSI driver enables mounting Windows file shares and Samba servers.
 
+**Chart:** `csi-smb-lyra` (version 1.0.7)
+
 **Chart Configuration:**
-- **Name:** Auto-configured (no fixed release name needed)
+- **Name:** `csi-smb-driver`
 - **Namespace:** `csi-drivers`
-- **Chart Version:** 1.0.7 (includes SMB CSI v1.19.1)
+- **Chart Version:** Latest stable version
 - **Project:** Lyra Platform
-
-**Installation via Rancher:**
-
-1. Navigate to **Apps & Marketplace → Charts** in Rancher
-2. Search for `csi-smb-lyra` in Harbor catalog
-3. Click **Install**
-4. Configure:
-   - **Namespace:** `csi-drivers` (create if needed)
-   - **Name:** Leave default or customize
-   - **Harbor Registry:** Should be pre-configured to use `harbor-registry-secret`
-5. Click **Install** (no additional configuration needed)
 
 **Verify SMB CSI Driver:**
 
@@ -1065,22 +1056,13 @@ smb.csi.k8s.io    false            false            false             <unset>   
 
 The NFS CSI driver enables mounting NFS (Network File System) shares.
 
+**Chart:** `csi-nfs-lyra` (version 1.0.6)
+
 **Chart Configuration:**
-- **Name:** Auto-configured (no fixed release name needed)
+- **Name:** `csi-nfs-driver`
 - **Namespace:** `csi-drivers`
-- **Chart Version:** 1.0.6 (includes NFS CSI v4.12.1)
+- **Chart Version:** Latest stable version
 - **Project:** Lyra Platform
-
-**Installation via Rancher:**
-
-1. Navigate to **Apps & Marketplace → Charts** in Rancher
-2. Search for `csi-nfs-lyra` in Harbor catalog
-3. Click **Install**
-4. Configure:
-   - **Namespace:** `csi-drivers`
-   - **Name:** Leave default or customize
-   - **Harbor Registry:** Should be pre-configured to use `harbor-registry-secret`
-5. Click **Install** (no additional configuration needed)
 
 **Verify NFS CSI Driver:**
 
@@ -1121,22 +1103,13 @@ nfs.csi.k8s.io    false            false            false             <unset>   
 
 The S3 CSI driver enables mounting S3-compatible object storage (AWS S3, MinIO, etc.) as file systems.
 
+**Chart:** `csi-s3-lyra` (version 1.0.7)
+
 **Chart Configuration:**
-- **Name:** Auto-configured (no fixed release name needed)
+- **Name:** `csi-s3-driver`
 - **Namespace:** `csi-drivers`
-- **Chart Version:** 1.0.7 (includes AWS Mountpoint S3 CSI v2.1.0)
+- **Chart Version:** Latest stable version
 - **Project:** Lyra Platform
-
-**Installation via Rancher:**
-
-1. Navigate to **Apps & Marketplace → Charts** in Rancher
-2. Search for `csi-s3-lyra` in Harbor catalog
-3. Click **Install**
-4. Configure:
-   - **Namespace:** `csi-drivers`
-   - **Name:** Leave default or customize
-   - **Harbor Registry:** Should be pre-configured to use `harbor-registry-secret`
-5. Click **Install** (no additional configuration needed)
 
 **Verify S3 CSI Driver:**
 
