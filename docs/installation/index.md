@@ -7,9 +7,10 @@ This section covers everything you need to deploy, configure, and maintain Lyra 
 Lyra Platform is deployed as a Helm chart to Kubernetes clusters. The deployment process includes:
 
 1. **Prerequisites** - Preparing your environment and infrastructure
-2. **Initial Deployment** - Installing Lyra for the first time
-3. **Configuration** - Post-installation configuration and setup
-4. **Updates** - Keeping your Lyra installation up-to-date
+2. **Kubernetes Setup** - Creating and configuring your Kubernetes cluster
+3. **Infrastructure Deployment** - Deploying storage, databases, and networking
+4. **Initial Deployment** - Installing Lyra Platform applications
+5. **Updates & Maintenance** - Keeping your Lyra installation up-to-date
 
 ## Installation Guides
 
@@ -22,6 +23,28 @@ System requirements, dependencies, and infrastructure preparation.
 - Container registry setup (Harbor)
 - Network and ingress configuration
 - SSL/TLS certificates
+
+### [Kubernetes Setup](kubernetes-setup.md)
+Create and configure a Kubernetes cluster using Rancher.
+
+**Topics covered:**
+- Creating Kubernetes cluster via Rancher
+- Configuring cluster nodes (control plane and workers)
+- Node role configuration (etcd, control plane, worker)
+- Rancher project setup for Lyra
+- Harbor registry integration
+- Cluster verification
+
+### [Infrastructure Deployment](infrastructure-deployment.md)
+Deploy required infrastructure components for Lyra Platform.
+
+**Topics covered:**
+- Ceph/Rook storage cluster deployment
+- PostgreSQL database cluster (HA with 3 replicas)
+- Redis HA and Ephemeral instances
+- CSI drivers for external storage (SMB, NFS, S3)
+- MetalLB load balancer configuration
+- Infrastructure verification
 
 ### [Initial Deployment](initial-deployment.md)
 Step-by-step guide for deploying Lyra Platform for the first time.
@@ -129,4 +152,14 @@ If you encounter issues during installation:
 
 ---
 
-Ready to get started? Begin with the [Prerequisites](prerequisites.md) guide.
+## Getting Started
+
+Ready to deploy Lyra Platform? Follow this installation workflow:
+
+1. **[Prerequisites](prerequisites.md)** - Prepare your environment
+2. **[Kubernetes Setup](kubernetes-setup.md)** - Create your cluster
+3. **[Infrastructure Deployment](infrastructure-deployment.md)** - Deploy infrastructure
+4. **[Initial Deployment](initial-deployment.md)** - Deploy Lyra applications
+5. **[Updates & Maintenance](updates.md)** - Keep your system updated
+
+Begin with the [Prerequisites](prerequisites.md) guide.
