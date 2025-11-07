@@ -50,11 +50,10 @@ Deploy required infrastructure components for Lyra Platform.
 Step-by-step guide for deploying Lyra Platform for the first time.
 
 **Topics covered:**
-- Building and pushing container images
-- Helm chart configuration
-- Deploying via Rancher UI
-- Initial superuser setup
-- Verification and testing
+- Deploying Lyra application via Rancher UI
+- Using predefined Helm chart values
+- Verifying deployment status
+- Creating initial superuser account
 
 ### [Updates & Maintenance](updates.md)
 Managing updates, upgrades, and ongoing maintenance.
@@ -70,23 +69,24 @@ Managing updates, upgrades, and ongoing maintenance.
 
 For experienced users, here's the quick installation workflow:
 
-```bash
-# 1. Build and push images to Harbor
-cd infrastructure/lyra
-./build-and-push-frontend.sh
-./build-and-push-backend.sh
-./build-and-push-scheduler.sh
+1. **Complete Prerequisites**
+   - Set up Kubernetes cluster via Rancher
+   - Deploy infrastructure (Ceph, PostgreSQL, Redis, CSI drivers, MetalLB)
 
-# 2. Deploy via Rancher
-# - Navigate to Apps & Marketplace
-# - Install lyra-app Helm chart from Harbor
-# - Configure values through Rancher UI
-# - Click Install
+2. **Deploy Lyra via Rancher UI**
+   - Navigate to Apps & Marketplace → Charts
+   - Search for `lyra-app` in Harbor catalog
+   - Click Install with predefined values
+   - Wait for deployment to complete
 
-# 3. Verify deployment
-kubectl get pods -n lyra
-kubectl get svc -n lyra
-```
+3. **Verify and Configure**
+   ```bash
+   # Check deployment status
+   kubectl get pods -n lyra
+
+   # Create initial superuser
+   kubectl exec -it -n lyra <backend-pod> -- python -m app.scripts.create_superuser
+   ```
 
 ## Deployment Architecture
 

@@ -6,10 +6,9 @@ This guide walks you through deploying Lyra Platform for the first time using Ra
 
 Lyra deployment follows these steps:
 
-1. Configure Helm chart values
-2. Deploy via Rancher UI
-3. Verify deployment
-4. Create initial superuser
+1. Deploy via Rancher UI
+2. Verify deployment
+3. Create initial superuser
 
 **Prerequisites:**
 - ✅ Kubernetes cluster configured ([Kubernetes Setup](kubernetes-setup.md))
@@ -17,234 +16,85 @@ Lyra deployment follows these steps:
 - ✅ Lyra Helm charts available in Harbor registry
 - ✅ `kubectl` access to your cluster
 
-**Estimated Time:** 15-30 minutes
+**Estimated Time:** 10-15 minutes
 
 ---
 
-## Step 1: Configure Helm Values
+## Step 1: Deploy via Rancher UI
 
-The Lyra Helm chart can be configured through Rancher UI forms or via a `values.yaml` file.
+The Lyra Helm chart comes with predefined values that automatically connect to the infrastructure components deployed in the previous step.
 
-### Option A: Configure via Rancher UI (Recommended)
-
-1. Open Rancher UI
-2. Navigate to **Apps & Marketplace**
-3. Click **Repositories** → Add your Harbor Helm repository if not already added
-4. Click **Charts** → Find `lyra-app`
-5. Click **Install**
-6. Fill in the configuration form
-
-**Key Configuration Sections:**
-
-#### Image Configuration
-```yaml
-backend:
-  image:
-    repository: registry.lyra.ovh/lyra/lyra-backend
-    tag: "1.0.0"
-    pullPolicy: IfNotPresent
-
-frontend:
-  image:
-    repository: registry.lyra.ovh/lyra/lyra-frontend
-    tag: "1.0.0"
-    pullPolicy: IfNotPresent
-
-scheduler:
-  image:
-    repository: registry.lyra.ovh/lyra/lyra-scheduler
-    tag: "1.0.0"
-    pullPolicy: IfNotPresent
-
-# Harbor registry secret created in Kubernetes Setup at project level
-# Images will be pulled using harbor-registry-secret automatically
-```
-
-#### Database Configuration
-```yaml
-database:
-  # Connection to PostgreSQL cluster deployed in Infrastructure Deployment
-  host: "lyra-postgres-rw.databases.svc.cluster.local"
-  port: 5432
-  name: "lyra_db"
-  # Credentials retrieved from postgres-cluster secret automatically
-```
-
-#### Redis Configuration
-```yaml
-redis:
-  # Connection to Redis HA deployed in Infrastructure Deployment
-  sentinel:
-    enabled: true
-    service: "redis-redis-ha.databases.svc.cluster.local"
-    port: 26379
-    masterName: "redis-master"
-  # Connection to Redis Ephemeral for sessions
-  ephemeral:
-    host: "redis-ephemeral.databases.svc.cluster.local"
-    port: 6379
-```
-
-#### Ingress Configuration
-```yaml
-ingress:
-  enabled: true
-  className: "nginx"
-  annotations:
-    cert-manager.io/cluster-issuer: "letsencrypt-prod"
-  hosts:
-    - host: lyra.yourdomain.com
-      paths:
-        - path: /
-          pathType: Prefix
-  tls:
-    - secretName: lyra-tls
-      hosts:
-        - lyra.yourdomain.com
-```
-
-### Option B: Configure via values.yaml File
-
-Create `custom-values.yaml`:
-
-```yaml
-# Image configuration
-backend:
-  image:
-    repository: registry.lyra.ovh/lyra/lyra-backend
-    tag: "1.0.0"
-  replicas: 2
-  resources:
-    requests:
-      cpu: "500m"
-      memory: "512Mi"
-    limits:
-      cpu: "2000m"
-      memory: "2Gi"
-
-frontend:
-  image:
-    repository: registry.lyra.ovh/lyra/lyra-frontend
-    tag: "1.0.0"
-  replicas: 2
-  resources:
-    requests:
-      cpu: "100m"
-      memory: "128Mi"
-    limits:
-      cpu: "500m"
-      memory: "512Mi"
-
-scheduler:
-  image:
-    repository: registry.lyra.ovh/lyra/lyra-scheduler
-    tag: "1.0.0"
-  replicas: 1
-  resources:
-    requests:
-      cpu: "250m"
-      memory: "256Mi"
-    limits:
-      cpu: "1000m"
-      memory: "1Gi"
-
-# Database connection (from Infrastructure Deployment)
-database:
-  host: "lyra-postgres-rw.databases.svc.cluster.local"
-  port: 5432
-  name: "lyra_db"
-
-# Redis connection (from Infrastructure Deployment)
-redis:
-  sentinel:
-    enabled: true
-    service: "redis-redis-ha.databases.svc.cluster.local"
-    port: 26379
-    masterName: "redis-master"
-  ephemeral:
-    host: "redis-ephemeral.databases.svc.cluster.local"
-    port: 6379
-
-# Ingress
-ingress:
-  enabled: true
-  className: "nginx"
-  annotations:
-    cert-manager.io/cluster-issuer: "letsencrypt-prod"
-    nginx.ingress.kubernetes.io/ssl-redirect: "true"
-  hosts:
-    - host: lyra.yourdomain.com
-      paths:
-        - path: /
-          pathType: Prefix
-  tls:
-    - secretName: lyra-tls
-      hosts:
-        - lyra.yourdomain.com
-
-# Application configuration
-config:
-  jwtSecretKey: "<generate-secure-random-key>"
-  jwtAlgorithm: "HS256"
-  accessTokenExpireMinutes: 30
-  refreshTokenExpireDays: 60
-```
-
----
-
-## Step 2: Deploy via Rancher
-
-### Using Rancher UI
+### Installation Steps
 
 1. **Navigate to Apps & Marketplace**
-   - Select your cluster
-   - Click **Apps & Marketplace** in left sidebar
+   - Open Rancher UI
+   - Select your Kubernetes cluster
+   - Click **Apps & Marketplace** in the left sidebar
 
-2. **Find Lyra Chart**
+2. **Find Lyra Application Chart**
    - Click **Charts** tab
-   - Search for `lyra-app`
-   - Click on the chart
+   - Search for `lyra-app` in the Harbor catalog
+   - Click on the **lyra-app** chart
 
 3. **Configure Installation**
-   - **Name:** `lyra`
-   - **Namespace:** `lyra` (create if doesn't exist)
-   - **Chart Version:** Select latest version
+   - **Name:** `lyra` (fixed release name)
+   - **Namespace:** `lyra` (will be created automatically)
+   - **Project:** Select **Lyra Platform** (created in Kubernetes Setup)
+   - **Chart Version:** Select latest version (e.g., `1.0.0`)
 
-4. **Configure Values**
-   - Use UI forms to configure (see Step 3 above)
-   - Or switch to **YAML** tab and paste your `custom-values.yaml`
+4. **Review Predefined Configuration**
 
-5. **Install**
-   - Review configuration
+   The chart includes predefined values that automatically configure:
+
+   - **Images**: Points to Harbor registry (`registry.lyra.ovh/lyra/`)
+     - Backend, Frontend, Scheduler images with correct tags
+     - Automatic image pull using project-level Harbor secret
+
+   - **Database**: Connects to PostgreSQL cluster from Infrastructure Deployment
+     - Host: `lyra-postgres-rw.databases.svc.cluster.local`
+     - Credentials retrieved automatically from PostgreSQL secret
+
+   - **Redis**: Connects to Redis HA and Ephemeral instances
+     - Redis HA with Sentinel for persistent data
+     - Redis Ephemeral for session storage
+
+   - **Storage**: Uses Ceph/Rook storage classes
+     - Persistent volumes for uploads and data
+
+   - **Ingress**: Pre-configured for external access
+     - MetalLB load balancer integration
+     - TLS certificate management
+
+5. **Optional: Customize Values (Only if Needed)**
+
+   If you need to customize any values (e.g., ingress hostname):
+   - In Rancher UI, look for configuration forms
+   - Common customizations:
+     - **Ingress Hostname**: Your domain name (e.g., `lyra.yourdomain.com`)
+     - **Replica Counts**: Adjust for your environment (defaults: backend=2, frontend=2, scheduler=1)
+     - **Resource Limits**: Adjust CPU/memory if needed
+
+   **Note**: All infrastructure connections (database, Redis, storage) are pre-configured correctly. Do NOT modify these unless you have a specific reason.
+
+6. **Install Application**
+   - Review the configuration summary
    - Click **Install**
-   - Wait for deployment to complete
+   - Wait for deployment to complete (typically 2-5 minutes)
 
-### Using Helm CLI (Alternative)
+### Monitor Deployment Progress
 
-```bash
-# Add Harbor Helm repository
-helm repo add lyra-harbor https://registry.lyra.ovh/chartrepo/lyra
-helm repo update
+You can monitor the deployment in Rancher:
 
-# Install Lyra
-helm install lyra lyra-harbor/lyra-app \
-  --namespace lyra \
-  --create-namespace \
-  --values custom-values.yaml \
-  --version 1.0.0
-
-# Or install from OCI registry
-helm install lyra \
-  oci://registry.lyra.ovh/lyra/lyra-app \
-  --version 1.0.0 \
-  --namespace lyra \
-  --create-namespace \
-  --values custom-values.yaml
-```
+1. Go to **Workloads** → **Deployments**
+2. Filter by namespace `lyra`
+3. Watch for all deployments to show "Active" status:
+   - `lyra-backend`
+   - `lyra-frontend`
+   - `lyra-scheduler`
 
 ---
 
-## Step 3: Verify Deployment
+## Step 2: Verify Deployment
 
 ### Check Pod Status
 
@@ -322,7 +172,7 @@ kubectl logs -n lyra -l app=lyra-scheduler --tail=50
 
 ---
 
-## Step 4: Initial Superuser Setup
+## Step 3: Initial Superuser Setup
 
 After deployment, you need to create the first superuser account.
 
