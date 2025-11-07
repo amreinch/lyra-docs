@@ -1123,12 +1123,190 @@ curl http://192.168.0.150
 
 ---
 
+### Understanding DNS to Application Flow
+
+This section explains how external traffic reaches your Lyra applications through DNS, MetalLB, and Ingress.
+
+**Traffic Flow Architecture:**
+
+```
+User Browser
+    ↓
+DNS Resolution (lyra.company.com → 192.168.0.150)
+    ↓
+MetalLB IP Pool (192.168.0.150)
+    ↓
+NGINX Ingress Controller (listening on 192.168.0.150:80/443)
+    ↓
+Ingress Routes (based on hostname/path)
+    ↓
+Kubernetes Services (lyra-frontend, lyra-backend, etc.)
+    ↓
+Application Pods
+```
+
+**How It Works:**
+
+1. **DNS Configuration**: You configure DNS records (or proxy/load balancer) to point FQDNs to the MetalLB IP address
+2. **MetalLB Assignment**: MetalLB assigns the IP (e.g., `192.168.0.150`) to the NGINX Ingress Controller service
+3. **Ingress Routing**: NGINX Ingress receives all HTTP/HTTPS traffic and routes based on the hostname in the request
+4. **Service Discovery**: Ingress forwards traffic to the appropriate Kubernetes service based on Ingress rules
+5. **Application Access**: The service routes traffic to the application pods
+
+---
+
+### DNS Configuration Examples
+
+**Scenario**: You want to expose Lyra Platform and Ceph Dashboard on separate domains.
+
+**MetalLB Configuration** (from Step 5):
+- IP Pool: `192.168.0.150-192.168.0.200`
+- NGINX Ingress IP: `192.168.0.150`
+
+**DNS Records to Create**:
+
+| FQDN                      | Record Type | Target          | Purpose                  |
+|---------------------------|-------------|-----------------|--------------------------|
+| `lyra.company.com`        | A           | `192.168.0.150` | Lyra Platform Frontend   |
+| `api.lyra.company.com`    | A           | `192.168.0.150` | Lyra Platform Backend API|
+| `cephadmin.company.com`   | A           | `192.168.0.150` | Ceph Dashboard           |
+
+**⚠️ IMPORTANT:** All FQDNs point to the **same MetalLB IP address** (`192.168.0.150`). The NGINX Ingress Controller uses the hostname to route traffic to the correct application.
+
+---
+
+### How Ingress Routing Works
+
+**Example Request Flow:**
+
+1. **User visits `https://lyra.company.com`**
+   - DNS resolves to `192.168.0.150`
+   - Request reaches NGINX Ingress Controller
+   - Ingress examines the `Host: lyra.company.com` header
+   - Routes to `lyra-frontend` service (based on Ingress rule)
+   - User sees Lyra Platform UI
+
+2. **User visits `https://api.lyra.company.com/api/v1/documents`**
+   - DNS resolves to `192.168.0.150` (same IP!)
+   - Request reaches NGINX Ingress Controller
+   - Ingress examines the `Host: api.lyra.company.com` header
+   - Routes to `lyra-backend` service (based on Ingress rule)
+   - API responds with data
+
+3. **User visits `https://cephadmin.company.com`**
+   - DNS resolves to `192.168.0.150` (same IP!)
+   - Request reaches NGINX Ingress Controller
+   - Ingress examines the `Host: cephadmin.company.com` header
+   - Routes to `rook-ceph-mgr-dashboard` service (based on Ingress rule)
+   - User sees Ceph Dashboard
+
+**Key Points:**
+- **Single IP, Multiple Domains**: All domains point to the same IP address
+- **Hostname-Based Routing**: Ingress uses the HTTP `Host` header to determine where to route traffic
+- **Defined During Deployment**: The actual hostname-to-service mappings are defined in Ingress resources created during application deployment
+- **Automatic SSL**: Can be configured with cert-manager for automatic Let's Encrypt certificates per domain
+
+---
+
+### DNS Configuration Options
+
+**Option 1: Direct DNS A Records** (Recommended for production)
+```
+lyra.company.com.           A    192.168.0.150
+api.lyra.company.com.       A    192.168.0.150
+cephadmin.company.com.      A    192.168.0.150
+```
+
+**Option 2: Wildcard DNS Record** (Convenient for development)
+```
+*.company.com.              A    192.168.0.150
+```
+This allows any subdomain (e.g., `lyra.company.com`, `api.lyra.company.com`, etc.) to resolve to the MetalLB IP.
+
+**Option 3: External Proxy/Load Balancer** (For complex networks)
+If your network has an external load balancer or reverse proxy:
+```
+External LB/Proxy (public IP) → MetalLB IP (192.168.0.150)
+```
+Configure the external load balancer to forward traffic to `192.168.0.150`.
+
+**Option 4: Local Testing (hosts file)**
+For development/testing without DNS:
+```bash
+# Edit /etc/hosts (Linux/Mac) or C:\Windows\System32\drivers\etc\hosts (Windows)
+192.168.0.150   lyra.company.com
+192.168.0.150   api.lyra.company.com
+192.168.0.150   cephadmin.company.com
+```
+
+---
+
+### Where Hostnames Are Defined
+
+**Important**: The actual FQDNs used by your applications are defined during application deployment, NOT during infrastructure deployment.
+
+**Ingress Resources** are created when deploying applications:
+
+**During Lyra Frontend Deployment:**
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: lyra-frontend
+spec:
+  rules:
+  - host: lyra.company.com        # ← You specify this during deployment
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: lyra-frontend
+            port:
+              number: 80
+```
+
+**During Ceph Dashboard Deployment:**
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: rook-ceph-mgr-dashboard
+spec:
+  rules:
+  - host: cephadmin.company.com   # ← You specify this during deployment
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: rook-ceph-mgr-dashboard
+            port:
+              number: 8443
+```
+
+**What This Means:**
+1. **Now (Infrastructure Deployment)**: Deploy NGINX Ingress and note the MetalLB IP
+2. **Later (Application Deployment)**: Specify the FQDNs in Ingress resources
+3. **Then (DNS Configuration)**: Create DNS records pointing those FQDNs to the MetalLB IP
+
+**Workflow Summary:**
+1. ✅ Deploy MetalLB with IP pool (Step 5)
+2. ✅ Deploy NGINX Ingress with specific IP from pool (Step 6 - you are here)
+3. ⏭️ Deploy Lyra applications with Ingress hostnames (next: `initial-deployment.md`)
+4. ⏭️ Configure DNS records to point FQDNs to MetalLB IP
+5. ⏭️ Access applications via FQDNs
+
+---
+
 ### NGINX Ingress Important Notes
 
 1. **Single Entry Point:**
    - All HTTP/HTTPS traffic to Lyra applications will go through this IP
-   - Configure your DNS to point to this IP address
-   - Example: `lyra.yourdomain.com` → `192.168.0.150`
+   - The MetalLB IP (`192.168.0.150`) serves all your applications
+   - Multiple FQDNs can point to the same IP - routing is handled by Ingress
 
 2. **SSL/TLS Certificates:**
    - NGINX Ingress supports automatic Let's Encrypt certificates via cert-manager
