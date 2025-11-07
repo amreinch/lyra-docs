@@ -6,137 +6,22 @@ This guide walks you through deploying Lyra Platform for the first time using Ra
 
 Lyra deployment follows these steps:
 
-1. Build container images
-2. Push images to Harbor registry
-3. Configure Helm chart values
-4. Deploy via Rancher UI
-5. Verify deployment
-6. Create initial superuser
+1. Configure Helm chart values
+2. Deploy via Rancher UI
+3. Verify deployment
+4. Create initial superuser
 
-**Estimated Time:** 30-45 minutes
+**Prerequisites:**
+- ✅ Kubernetes cluster configured ([Kubernetes Setup](kubernetes-setup.md))
+- ✅ Infrastructure deployed ([Infrastructure Deployment](infrastructure-deployment.md))
+- ✅ Lyra Helm charts available in Harbor registry
+- ✅ `kubectl` access to your cluster
 
----
-
-## Step 1: Build Container Images
-
-Lyra consists of three main container images that need to be built and pushed to your Harbor registry.
-
-### Navigate to Infrastructure Directory
-
-```bash
-cd /path/to/lyra/infrastructure/lyra
-```
-
-### Build and Push Frontend
-
-```bash
-./build-and-push-frontend.sh
-```
-
-**What this does:**
-- Builds React frontend with production optimizations
-- Creates Docker image `lyra-frontend:1.0.X`
-- Pushes to `registry.lyra.ovh/lyra/lyra-frontend:1.0.X`
-- Tags as `latest`
-
-**Expected output:**
-```
-Building frontend image...
-[+] Building 120.5s (12/12) FINISHED
-Successfully built lyra-frontend:1.0.0
-Pushing to registry.lyra.ovh...
-✓ Pushed lyra-frontend:1.0.0
-✓ Pushed lyra-frontend:latest
-```
-
-### Build and Push Backend
-
-```bash
-./build-and-push-backend.sh
-```
-
-**What this does:**
-- Builds FastAPI backend application
-- Creates Docker image `lyra-backend:1.0.X`
-- Pushes to `registry.lyra.ovh/lyra/lyra-backend:1.0.X`
-- Tags as `latest`
-
-### Build and Push Scheduler
-
-```bash
-./build-and-push-scheduler.sh
-```
-
-**What this does:**
-- Builds scheduler service for background jobs
-- Creates Docker image `lyra-scheduler:1.0.X`
-- Pushes to `registry.lyra.ovh/lyra/lyra-scheduler:1.0.X`
-- Tags as `latest`
-
-### Verify Images in Harbor
-
-Log into Harbor web interface and verify all images are present:
-
-```
-https://registry.lyra.ovh
-→ Project: lyra
-→ Repositories:
-  - lyra/lyra-frontend:1.0.X, latest
-  - lyra/lyra-backend:1.0.X, latest
-  - lyra/lyra-scheduler:1.0.X, latest
-```
+**Estimated Time:** 15-30 minutes
 
 ---
 
-## Step 2: Prepare Kubernetes Secrets
-
-### Create Harbor Registry Secret
-
-This secret allows Kubernetes to pull images from your private Harbor registry.
-
-**Using Rancher UI:**
-1. Navigate to your cluster → **Storage** → **Secrets**
-2. Click **Create** → **Registry**
-3. Fill in details:
-   - **Name:** `harbor-registry-secret`
-   - **Namespace:** `lyra`
-   - **Registry:** `registry.lyra.ovh`
-   - **Username:** `robot$lyra-deployer` (your Harbor robot account)
-   - **Password:** [Robot account token]
-4. Click **Save**
-
-**Using kubectl:**
-```bash
-kubectl create namespace lyra
-
-kubectl create secret docker-registry harbor-registry-secret \
-  --docker-server=registry.lyra.ovh \
-  --docker-username='robot$lyra-deployer' \
-  --docker-password='<your-robot-token>' \
-  --namespace=lyra
-```
-
-### Create Database Credentials Secret
-
-```bash
-kubectl create secret generic lyra-db-secret \
-  --from-literal=username=lyra_user \
-  --from-literal=password='<secure-password>' \
-  --from-literal=database=lyra \
-  --namespace=lyra
-```
-
-### Create Redis Credentials Secret
-
-```bash
-kubectl create secret generic lyra-redis-secret \
-  --from-literal=password='<secure-redis-password>' \
-  --namespace=lyra
-```
-
----
-
-## Step 3: Configure Helm Values
+## Step 1: Configure Helm Values
 
 The Lyra Helm chart can be configured through Rancher UI forms or via a `values.yaml` file.
 
@@ -171,29 +56,33 @@ scheduler:
     tag: "1.0.0"
     pullPolicy: IfNotPresent
 
-imagePullSecrets:
-  - name: harbor-registry-secret
+# Harbor registry secret created in Kubernetes Setup at project level
+# Images will be pulled using harbor-registry-secret automatically
 ```
 
 #### Database Configuration
 ```yaml
-postgresql:
-  enabled: false  # Using external database
-  external:
-    host: "postgresql.lyra.svc.cluster.local"
-    port: 5432
-    database: "lyra"
-    existingSecret: "lyra-db-secret"
+database:
+  # Connection to PostgreSQL cluster deployed in Infrastructure Deployment
+  host: "lyra-postgres-rw.databases.svc.cluster.local"
+  port: 5432
+  name: "lyra_db"
+  # Credentials retrieved from postgres-cluster secret automatically
 ```
 
 #### Redis Configuration
 ```yaml
 redis:
-  enabled: false  # Using external Redis
-  external:
-    host: "redis-master.lyra.svc.cluster.local"
+  # Connection to Redis HA deployed in Infrastructure Deployment
+  sentinel:
+    enabled: true
+    service: "redis-redis-ha.databases.svc.cluster.local"
+    port: 26379
+    masterName: "redis-master"
+  # Connection to Redis Ephemeral for sessions
+  ephemeral:
+    host: "redis-ephemeral.databases.svc.cluster.local"
     port: 6379
-    existingSecret: "lyra-redis-secret"
 ```
 
 #### Ingress Configuration
@@ -259,25 +148,22 @@ scheduler:
       cpu: "1000m"
       memory: "1Gi"
 
-imagePullSecrets:
-  - name: harbor-registry-secret
+# Database connection (from Infrastructure Deployment)
+database:
+  host: "lyra-postgres-rw.databases.svc.cluster.local"
+  port: 5432
+  name: "lyra_db"
 
-# Database
-postgresql:
-  enabled: false
-  external:
-    host: "postgresql.lyra.svc.cluster.local"
-    port: 5432
-    database: "lyra"
-    existingSecret: "lyra-db-secret"
-
-# Redis
+# Redis connection (from Infrastructure Deployment)
 redis:
-  enabled: false
-  external:
-    host: "redis-master.lyra.svc.cluster.local"
+  sentinel:
+    enabled: true
+    service: "redis-redis-ha.databases.svc.cluster.local"
+    port: 26379
+    masterName: "redis-master"
+  ephemeral:
+    host: "redis-ephemeral.databases.svc.cluster.local"
     port: 6379
-    existingSecret: "lyra-redis-secret"
 
 # Ingress
 ingress:
@@ -306,7 +192,7 @@ config:
 
 ---
 
-## Step 4: Deploy via Rancher
+## Step 2: Deploy via Rancher
 
 ### Using Rancher UI
 
@@ -358,7 +244,7 @@ helm install lyra \
 
 ---
 
-## Step 5: Verify Deployment
+## Step 3: Verify Deployment
 
 ### Check Pod Status
 
@@ -436,7 +322,7 @@ kubectl logs -n lyra -l app=lyra-scheduler --tail=50
 
 ---
 
-## Step 6: Initial Superuser Setup
+## Step 4: Initial Superuser Setup
 
 After deployment, you need to create the first superuser account.
 
@@ -552,9 +438,10 @@ kubectl exec -it -n lyra $BACKEND_POD -- bash
 python -c "from app.db.session import engine; engine.connect()"
 ```
 
-**Check database credentials:**
+**Check PostgreSQL status:**
 ```bash
-kubectl get secret lyra-db-secret -n lyra -o yaml
+kubectl get pods -n databases -l app.kubernetes.io/name=lyra-postgres
+kubectl get cluster -n databases lyra-postgres
 ```
 
 ### Ingress Not Working
