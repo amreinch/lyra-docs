@@ -11,6 +11,7 @@ After setting up your Kubernetes cluster, you need to deploy the infrastructure 
 3. **Redis Cache** - Caching and session management
 4. **CSI Drivers** - External storage integration (SMB, NFS, S3)
 5. **MetalLB Load Balancer** - External service access
+6. **NGINX Ingress Controller** - HTTP/HTTPS routing and external access
 
 **Prerequisites:**
 - ✅ Kubernetes cluster created and configured ([see Kubernetes Setup](kubernetes-setup.md))
@@ -1008,6 +1009,147 @@ kubectl delete deployment nginx-test
 
 ---
 
+## Step 6: Deploy NGINX Ingress Controller
+
+### NGINX Ingress Overview
+
+The NGINX Ingress Controller manages external access to services in the Kubernetes cluster. It acts as a reverse proxy and load balancer, routing HTTP/HTTPS traffic to the appropriate services based on Ingress rules.
+
+**Why NGINX Ingress?**
+- Provides a single entry point for all HTTP/HTTPS traffic
+- Supports SSL/TLS termination
+- Enables host-based and path-based routing
+- Essential for exposing Lyra Platform web services
+- Works with MetalLB to get an external IP address
+
+**Integration with MetalLB:** The NGINX Ingress Controller will automatically receive an external IP from the MetalLB pool configured in Step 5.
+
+**Namespace:** NGINX Ingress is deployed in the `ingress-nginx` namespace.
+
+---
+
+### Deploy NGINX Ingress
+
+**Chart:** `nginx-ingress-lyra`
+
+**Chart Configuration:**
+- **Name:** `nginx-ingress`
+- **Namespace:** `ingress-nginx`
+- **Chart Version:** Latest stable version
+- **Project:** Lyra Platform
+
+**Important Configuration Values:**
+
+Before installing, you should configure a specific external IP address from your MetalLB pool for the Ingress Controller.
+
+**LoadBalancer IP Configuration:**
+```yaml
+controller:
+  service:
+    loadBalancerIP: "192.168.0.150"  # Adjust to an IP from your MetalLB pool
+```
+
+**⚠️ IMPORTANT:** The IP address must:
+- Be within the MetalLB IP address pool range configured in Step 5
+- Not be already assigned to another LoadBalancer service
+- Be accessible from your network
+
+**Example Configuration:**
+- MetalLB Pool: `192.168.0.150-192.168.0.200`
+- **NGINX Ingress IP: `192.168.0.150`** ✅ (First IP in the pool - recommended)
+
+---
+
+### Configure NGINX Ingress via Rancher
+
+When installing via Rancher, configure the LoadBalancer IP:
+
+1. Navigate to **Apps & Marketplace → Charts** in Rancher
+2. Search for `nginx-ingress-lyra` in Harbor catalog
+3. Click **Install**
+4. Configure:
+   - **Namespace:** `ingress-nginx` (create if needed)
+   - **Name:** `nginx-ingress`
+   - **Controller → Service → LoadBalancer IP:** Enter your chosen IP (e.g., `192.168.0.150`)
+5. Review other settings (defaults are usually fine)
+6. Click **Install**
+
+---
+
+### Verify NGINX Ingress Deployment
+
+**Check NGINX Ingress pods:**
+```bash
+kubectl get pods -n ingress-nginx
+```
+
+**Expected output:**
+```
+NAME                                        READY   STATUS    RESTARTS   AGE
+nginx-ingress-controller-xxxxxxxxxx-xxxxx   1/1     Running   0          2m
+```
+
+**Verify NGINX Ingress service and external IP:**
+```bash
+kubectl get svc -n ingress-nginx
+```
+
+**Expected output:**
+```
+NAME                                 TYPE           CLUSTER-IP      EXTERNAL-IP     PORT(S)                      AGE
+nginx-ingress-controller             LoadBalancer   10.43.xxx.xxx   192.168.0.150   80:xxxxx/TCP,443:xxxxx/TCP   2m
+```
+
+**✅ Success:** The `EXTERNAL-IP` field shows the configured IP from your MetalLB pool (not `<pending>`)
+
+---
+
+### Test NGINX Ingress
+
+Test that the Ingress Controller is responding:
+
+```bash
+# Test HTTP access from outside the cluster
+curl http://192.168.0.150
+
+# Should return a 404 error (expected - no Ingress rules configured yet)
+# Response: "404 Not Found" from nginx
+```
+
+**Expected result:**
+- HTTP request succeeds (connection established)
+- Returns nginx 404 page (no backend services configured yet)
+- This confirms the Ingress Controller is working
+
+---
+
+### NGINX Ingress Important Notes
+
+1. **Single Entry Point:**
+   - All HTTP/HTTPS traffic to Lyra applications will go through this IP
+   - Configure your DNS to point to this IP address
+   - Example: `lyra.yourdomain.com` → `192.168.0.150`
+
+2. **SSL/TLS Certificates:**
+   - NGINX Ingress supports automatic Let's Encrypt certificates via cert-manager
+   - Manual certificate management via Kubernetes secrets
+   - Configuration will be covered in the Lyra application deployment guide
+
+3. **Resource Requirements:**
+   - Default configuration should work for most deployments
+   - For high-traffic environments, consider adjusting controller replicas and resources
+
+4. **Integration with Lyra:**
+   - Lyra will create Ingress resources to route traffic to backend and frontend services
+   - All Ingress rules will automatically use this controller
+   - Configured during Lyra application deployment
+
+5. **High Availability:**
+   - For production, consider deploying multiple controller replicas
+   - MetalLB will handle IP failover automatically
+
+---
+
 ## Infrastructure Deployment Complete
 
 **✅ Congratulations!** You have successfully deployed all required infrastructure components for Lyra Platform.
@@ -1026,6 +1168,7 @@ kubectl delete deployment nginx-test
 **Networking Infrastructure:**
 - ✅ MetalLB load balancer with configured IP pool
 - ✅ Layer 2 mode for external service access
+- ✅ NGINX Ingress Controller with external IP from MetalLB
 
 **Cluster Configuration:**
 - ✅ All components deployed in appropriate namespaces
@@ -1067,9 +1210,13 @@ kubectl get csidriver
 # 5. Check MetalLB
 kubectl get pods -n metallb-system
 kubectl get ipaddresspool -n metallb-system
+
+# 6. Check NGINX Ingress
+kubectl get pods -n ingress-nginx
+kubectl get svc -n ingress-nginx
 ```
 
-All pods should show `Running` status before proceeding to application deployment.
+All pods should show `Running` status and the NGINX Ingress service should have an `EXTERNAL-IP` assigned before proceeding to application deployment.
 
 ---
 
@@ -1083,6 +1230,7 @@ Your Kubernetes cluster now has all required infrastructure components:
 - ✅ Redis HA and Ephemeral instances
 - ✅ CSI drivers for external storage (SMB, NFS, S3)
 - ✅ MetalLB load balancer configured
+- ✅ NGINX Ingress Controller with external IP
 
 **Proceed to:** [Initial Deployment](initial-deployment.md)
 
